@@ -6,7 +6,6 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    InputMediaPhoto,
 )
 from telegram.ext import (
     Application,
@@ -48,11 +47,10 @@ if SHEETS_ENABLED:
     ORDER_PHONE,
     ORDER_TYPE,
     ORDER_BUDGET,
-    ORDER_DESC,
     ORDER_CONFIRM,
     CALC_SOURCES,
     CALC_DEADLINE,
-) = range(10)
+) = range(9)
 
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
 CONSULT_TIME, CONSULT_PHONE = range(12, 14)
@@ -492,11 +490,13 @@ async def adm_port_save(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def adm_port_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
     lang = get_lang(ctx)
     ctx.user_data["new_port"] = {}
-    await query.edit_message_text(t(lang, "adm_port_cancelled"))
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(t(lang, "adm_port_cancelled"))
+    else:
+        await update.message.reply_text(t(lang, "adm_port_cancelled"))
     return ConversationHandler.END
 
 
@@ -630,6 +630,8 @@ async def my_orders_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
 # ── Reminder ──────────────────────────────────────────────────────────────────
 
 def _cancel_reminder(ctx: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    if not ctx.job_queue:
+        return
     for job in ctx.job_queue.get_jobs_by_name(f"reminder_{user_id}"):
         job.schedule_removal()
 
@@ -1169,9 +1171,9 @@ async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Ishlatish: `/accept <order_id>`", parse_mode=ParseMode.MARKDOWN)
         return
     order_id = int(ctx.args[0])
-    # Cancel reminder job
-    for job in ctx.job_queue.get_jobs_by_name(f"ord_remind_{order_id}"):
-        job.schedule_removal()
+    if ctx.job_queue:
+        for job in ctx.job_queue.get_jobs_by_name(f"ord_remind_{order_id}"):
+            job.schedule_removal()
     order = get_order(order_id)
     if not order:
         await update.message.reply_text(t("uz", "admin_accept_404", id=order_id))
@@ -1198,8 +1200,9 @@ async def admin_accept_consult(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text("Ishlatish: `/acceptc <consult_id>`", parse_mode=ParseMode.MARKDOWN)
         return
     consult_id = int(ctx.args[0])
-    for job in ctx.job_queue.get_jobs_by_name(f"con_remind_{consult_id}"):
-        job.schedule_removal()
+    if ctx.job_queue:
+        for job in ctx.job_queue.get_jobs_by_name(f"con_remind_{consult_id}"):
+            job.schedule_removal()
     await update.message.reply_text(f"✅ Konsultatsiya #{consult_id} qabul qilindi.")
 
 
