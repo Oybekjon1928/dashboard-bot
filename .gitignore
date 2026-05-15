@@ -1,0 +1,8 @@
+.env
+*.db
+__pycache__/
+venv/
+*.pyc
+ssh-key.key
+credentials.json
+portfolio/
