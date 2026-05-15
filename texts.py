@@ -6,13 +6,9 @@ TEXTS = {
         # ── welcome / menu
         "welcome": (
             "👋 Добро пожаловать!\n\n"
-            "Я помогу вам заказать профессиональный дашборд под ваши нужды.\n"
-            "Мы создаём:\n"
-            "• 📊 Business / Analytics дашборды\n"
-            "• 📈 Power BI и Tableau отчёты\n"
-            "• 🌐 Web / SaaS дашборды\n"
-            "• 📋 Excel / Google Sheets решения\n\n"
-            "Выберите раздел ниже 👇"
+            "Мы создаём профессиональные дашборды для бизнеса.\n"
+            "💵 Цена: $10–$150 · ⏱ Срок: 1–8 дней\n\n"
+            "Выберите раздел 👇"
         ),
         "main_menu": "🏠 Главное меню",
         "btn_services":  "📊 Услуги",
@@ -53,18 +49,16 @@ TEXTS = {
         ),
 
         # ── order flow
-        "order_start":   "📝 Оформление заявки\n\nШаг 1 из 5\n\nВведите ваше *имя*:",
-        "order_phone":   "📱 Шаг 2 из 5\n\nВведите ваш *номер телефона*:",
-        "order_type":    "📊 Шаг 3 из 5\n\nКакой тип дашборда вам нужен?",
-        "order_budget":  "💰 Шаг 4 из 5\n\nУкажите ваш *бюджет и сроки*\n_(например: $100, нужно за 5 дней)_:",
-        "order_desc":    "📋 Шаг 5 из 5\n\nОпишите *задачу подробнее*\n_(что нужно отслеживать, откуда данные, какой результат ожидаете)_:",
+        "order_start":   "📝 *Заявка — шаг 1/4*\n\nВведите ваше *имя*:",
+        "order_phone":   "📱 *Шаг 2/4*\n\nВведите *номер телефона*:",
+        "order_type":    "📊 *Шаг 3/4*\n\nКакой тип дашборда нужен?",
+        "order_budget":  "💰 *Шаг 4/4*\n\nУкажите *бюджет и сроки*\n_(например: $50, нужно за 3 дня)_:",
         "order_confirm": (
             "✅ *Проверьте заявку:*\n\n"
-            "👤 Имя: {name}\n"
-            "📱 Телефон: {phone}\n"
-            "📊 Тип: {dtype}\n"
-            "💰 Бюджет/сроки: {budget}\n"
-            "📋 Описание: {desc}\n\n"
+            "👤 {name}\n"
+            "📱 {phone}\n"
+            "📊 {dtype}\n"
+            "💰 {budget}\n\n"
             "Всё верно?"
         ),
         "btn_confirm":      "✅ Подтвердить",
@@ -330,12 +324,8 @@ TEXTS = {
         # ── welcome / menu
         "welcome": (
             "👋 Xush kelibsiz!\n\n"
-            "Men sizga professional dashboard buyurtma qilishda yordam beraman.\n"
-            "Biz yaratamiz:\n"
-            "• 📊 Business / Analytics dashboardlar\n"
-            "• 📈 Power BI va Tableau hisobotlar\n"
-            "• 🌐 Web / SaaS dashboardlar\n"
-            "• 📋 Excel / Google Sheets yechimlar\n\n"
+            "Biz biznes uchun professional dashboard'lar yaratamiz.\n"
+            "💵 Narx: $10–$150 · ⏱ Muddat: 1–8 kun\n\n"
             "Quyidagi bo'limlardan birini tanlang 👇"
         ),
         "main_menu": "🏠 Asosiy menyu",
@@ -377,18 +367,16 @@ TEXTS = {
         ),
 
         # ── order flow
-        "order_start":   "📝 Ariza rasmiylashtirilmoqda\n\n1/5-qadam\n\n*Ismingizni* kiriting:",
-        "order_phone":   "📱 2/5-qadam\n\n*Telefon raqamingizni* kiriting:",
-        "order_type":    "📊 3/5-qadam\n\nQaysi turdagi dashboard kerak?",
-        "order_budget":  "💰 4/5-qadam\n\n*Byudjet va muddatni* kiriting\n_(masalan: $100, 5 kun ichida kerak)_:",
-        "order_desc":    "📋 5/5-qadam\n\n*Vazifani batafsil tasvirlab bering*\n_(nima kuzatish kerak, ma'lumotlar qayerdan, qanday natija kutilmoqda)_:",
+        "order_start":   "📝 *Ariza — 1/4-qadam*\n\n*Ismingizni* kiriting:",
+        "order_phone":   "📱 *2/4-qadam*\n\n*Telefon raqamingizni* kiriting:",
+        "order_type":    "📊 *3/4-qadam*\n\nQaysi turdagi dashboard kerak?",
+        "order_budget":  "💰 *4/4-qadam*\n\n*Byudjet va muddatni* kiriting\n_(masalan: $50, 3 kun ichida kerak)_:",
         "order_confirm": (
             "✅ *Arizangizni tekshiring:*\n\n"
-            "👤 Ism: {name}\n"
-            "📱 Telefon: {phone}\n"
-            "📊 Tur: {dtype}\n"
-            "💰 Byudjet/muddat: {budget}\n"
-            "📋 Tavsif: {desc}\n\n"
+            "👤 {name}\n"
+            "📱 {phone}\n"
+            "📊 {dtype}\n"
+            "💰 {budget}\n\n"
             "Hammasi to'g'rimi?"
         ),
         "btn_confirm":      "✅ Tasdiqlash",

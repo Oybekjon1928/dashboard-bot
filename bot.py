@@ -106,12 +106,18 @@ def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(t(lang, "btn_services"),    callback_data="services"),
             InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
         ],
-        [InlineKeyboardButton(t(lang, "btn_portfolio"),      callback_data="portfolio")],
-        [InlineKeyboardButton(t(lang, "btn_calc"),           callback_data="calc")],
-        [InlineKeyboardButton(t(lang, "btn_consult"),        callback_data="consult")],
-        [InlineKeyboardButton(t(lang, "btn_order"),          callback_data="order")],
-        [InlineKeyboardButton(t(lang, "btn_myorders"),       callback_data="myorders")],
-        [InlineKeyboardButton(t(lang, "btn_channel"),        url=CHANNEL_URL)],
+        [
+            InlineKeyboardButton(t(lang, "btn_portfolio"),   callback_data="portfolio"),
+            InlineKeyboardButton(t(lang, "btn_calc"),        callback_data="calc"),
+        ],
+        [
+            InlineKeyboardButton(t(lang, "btn_consult"),     callback_data="consult"),
+            InlineKeyboardButton(t(lang, "btn_order"),       callback_data="order"),
+        ],
+        [
+            InlineKeyboardButton(t(lang, "btn_myorders"),    callback_data="myorders"),
+            InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
+        ],
         [
             InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
             InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
@@ -975,13 +981,7 @@ async def order_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 async def order_budget(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     ctx.user_data["order"]["budget"] = update.message.text.strip()
-    await update.message.reply_text(t(lang, "order_desc"), parse_mode=ParseMode.MARKDOWN)
-    return ORDER_DESC
-
-
-async def order_desc(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["desc"] = update.message.text.strip()
+    ctx.user_data["order"]["desc"] = ""
     order = ctx.user_data["order"]
     await update.message.reply_text(
         t(lang, "order_confirm", **order),
@@ -1369,9 +1369,6 @@ def main() -> None:
             ],
             ORDER_BUDGET: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, order_budget),
-            ],
-            ORDER_DESC: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, order_desc),
             ],
             ORDER_CONFIRM: [
                 CallbackQueryHandler(order_confirm_yes, pattern="^confirm_yes$"),
