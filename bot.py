@@ -1,5 +1,7 @@
+import asyncio
 import logging
 import os
+from aiohttp import web
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -692,7 +694,29 @@ def main() -> None:
     app.add_handler(user_conv)
 
     logger.info("Bot started. Sheets: %s", "enabled" if SHEETS_ENABLED else "disabled")
-    app.run_polling(drop_pending_updates=True)
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_run(app))
+
+
+async def _health(request):
+    return web.Response(text="OK")
+
+
+async def _run(app: Application) -> None:
+    port = int(os.getenv("PORT", 8080))
+    web_app = web.Application()
+    web_app.router.add_get("/", _health)
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    await web.TCPSite(runner, "0.0.0.0", port).start()
+    logger.info("Health check running on port %s", port)
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(drop_pending_updates=True)
+
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
