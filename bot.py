@@ -816,18 +816,19 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         logger.error("Consult admin notify failed: %s", e)
 
     # Schedule 15-min repeat reminder to admin
-    ctx.job_queue.run_once(
-        _remind_admin_consult,
-        when=900,
-        data={
-            "consult_id": consult_id,
-            "name": user.first_name or "—",
-            "phone": phone,
-            "day": consult.get("day", "—"),
-            "time": consult.get("time", "—"),
-        },
-        name=f"con_remind_{consult_id}",
-    )
+    if ctx.job_queue:
+        ctx.job_queue.run_once(
+            _remind_admin_consult,
+            when=900,
+            data={
+                "consult_id": consult_id,
+                "name": user.first_name or "—",
+                "phone": phone,
+                "day": consult.get("day", "—"),
+                "time": consult.get("time", "—"),
+            },
+            name=f"con_remind_{consult_id}",
+        )
 
     await update.message.reply_text(
         t(lang, "consult_confirm",
@@ -993,12 +994,13 @@ async def order_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     # Schedule 1-hour reminder
     user_id = query.from_user.id
     _cancel_reminder(ctx, user_id)
-    ctx.job_queue.run_once(
-        _send_reminder,
-        when=3600,
-        data={"user_id": user_id, "lang": lang},
-        name=f"reminder_{user_id}",
-    )
+    if ctx.job_queue:
+        ctx.job_queue.run_once(
+            _send_reminder,
+            when=3600,
+            data={"user_id": user_id, "lang": lang},
+            name=f"reminder_{user_id}",
+        )
 
     await query.edit_message_text(t(lang, "order_start"), parse_mode=ParseMode.MARKDOWN)
     return ORDER_NAME
@@ -1094,12 +1096,13 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         logger.error("Admin notification failed: %s", e)
 
     # Schedule 15-min repeat reminder to admin
-    ctx.job_queue.run_once(
-        _remind_admin_order,
-        when=900,
-        data={"order_id": order_id, "order": dict(order)},
-        name=f"ord_remind_{order_id}",
-    )
+    if ctx.job_queue:
+        ctx.job_queue.run_once(
+            _remind_admin_order,
+            when=900,
+            data={"order_id": order_id, "order": dict(order)},
+            name=f"ord_remind_{order_id}",
+        )
 
     await query.edit_message_text(
         t(lang, "order_sent", admin_username=ADMIN_USERNAME.replace("_", "\\_")),
