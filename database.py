@@ -47,6 +47,18 @@ def init_db():
                 created_at TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS portfolio (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                category    TEXT NOT NULL,
+                title       TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                file_id     TEXT DEFAULT '',
+                video_url   TEXT DEFAULT '',
+                demo_url    TEXT DEFAULT '',
+                created_at  TEXT
+            )
+        """)
         conn.commit()
 
 
@@ -128,3 +140,45 @@ def all_consultations():
         return conn.execute(
             "SELECT * FROM consultations ORDER BY created_at DESC"
         ).fetchall()
+
+
+# ── Portfolio ─────────────────────────────────────────────────────────────────
+
+def add_portfolio_item(category, title, description, file_id, video_url, demo_url) -> int:
+    with _conn() as conn:
+        cur = conn.execute("""
+            INSERT INTO portfolio
+                (category, title, description, file_id, video_url, demo_url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (category, title, description or "", file_id or "",
+              video_url or "", demo_url or "", datetime.now().isoformat()))
+        conn.commit()
+        return cur.lastrowid
+
+
+def get_portfolio_by_category(category: str):
+    with _conn() as conn:
+        return conn.execute(
+            "SELECT * FROM portfolio WHERE category = ? ORDER BY created_at DESC",
+            (category,)
+        ).fetchall()
+
+
+def get_portfolio_item(item_id: int):
+    with _conn() as conn:
+        return conn.execute(
+            "SELECT * FROM portfolio WHERE id = ?", (item_id,)
+        ).fetchone()
+
+
+def get_all_portfolio():
+    with _conn() as conn:
+        return conn.execute(
+            "SELECT * FROM portfolio ORDER BY category, created_at DESC"
+        ).fetchall()
+
+
+def delete_portfolio_item(item_id: int):
+    with _conn() as conn:
+        conn.execute("DELETE FROM portfolio WHERE id = ?", (item_id,))
+        conn.commit()
