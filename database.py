@@ -1,7 +1,12 @@
 import os
 import psycopg2
 import psycopg2.extras
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+TZ_TASHKENT = timezone(timedelta(hours=5))
+
+def now_tashkent() -> str:
+    return datetime.now(TZ_TASHKENT).strftime("%Y-%m-%d %H:%M")
 
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 
@@ -72,7 +77,7 @@ def upsert_user(user_id: int, username: str, lang: str):
                 ON CONFLICT (user_id) DO UPDATE SET
                     username = EXCLUDED.username,
                     lang     = EXCLUDED.lang
-            """, (user_id, username or "", lang, datetime.now().isoformat()))
+            """, (user_id, username or "", lang, now_tashkent()))
         conn.commit()
 
 
@@ -85,7 +90,7 @@ def save_order(user_id, username, name, phone, dtype, budget, description) -> in
                 VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending', %s)
                 RETURNING id
             """, (user_id, username or "", name, phone, dtype, budget, description,
-                  datetime.now().isoformat()))
+                  now_tashkent()))
             row = cur.fetchone()
         conn.commit()
         return row["id"]
@@ -156,7 +161,7 @@ def save_consultation(user_id, username, first_name, phone, day, time) -> int:
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (user_id, username or "", first_name or "", phone, day, time,
-                  datetime.now().isoformat()))
+                  now_tashkent()))
             row = cur.fetchone()
         conn.commit()
         return row["id"]
@@ -180,7 +185,7 @@ def add_portfolio_item(category, title, description, file_id, video_url, demo_ur
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (category, title, description or "", file_id or "",
-                  video_url or "", demo_url or "", datetime.now().isoformat()))
+                  video_url or "", demo_url or "", now_tashkent()))
             row = cur.fetchone()
         conn.commit()
         return row["id"]
