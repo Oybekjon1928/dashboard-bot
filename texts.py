@@ -5,10 +5,12 @@ TEXTS = {
 
         # ── welcome / menu
         "welcome": (
-            "👋 Добро пожаловать!\n\n"
-            "Мы создаём профессиональные дашборды для бизнеса.\n"
-            "💵 Цена: $10–$150 · ⏱ Срок: 1–8 дней\n\n"
-            "Выберите раздел 👇"
+            "👋 Xush kelibsiz / Добро пожаловать!\n\n"
+            "Biz sizning biznesingiz uchun professional dashboard yaratamiz.\n\n"
+            "💵 $10 dan $150 gacha\n"
+            "⚡ 1 kundan 8 kungacha\n"
+            "✅ 3 ta bepul tuzatish kafolati\n\n"
+            "Quyidagi bo'limlardan birini tanlang 👇"
         ),
         "main_menu": "🏠 Главное меню",
         "btn_services":  "📊 Услуги",
@@ -22,18 +24,34 @@ TEXTS = {
 
         # ── services
         "services_text": (
-            "📊 *Наши услуги*\n\n"
-            "*Business / Analytics дашборды*\n"
-            "Визуализация KPI, продаж, воронок и ключевых метрик вашего бизнеса.\n\n"
-            "*Power BI / Tableau*\n"
-            "Интерактивные отчёты с подключением к любым источникам данных.\n\n"
-            "*Web / SaaS дашборды*\n"
-            "Кастомные веб-дашборды, встроенные в ваш продукт или сайт.\n\n"
-            "*Excel / Google Sheets*\n"
-            "Автоматизированные таблицы с графиками, сводными и формулами.\n\n"
-            "Срок выполнения: от 1 до 8 дней\n"
-            "Стоимость: от $10 до $150 — зависит от сложности\n\n"
-            "Готовы обсудить ваш проект? Оставьте заявку! 👇"
+            "📊 *Xizmatlarimiz*\n\n"
+
+            "📋 *Excel / Google Sheets*\n"
+            "✅ Mavjud jadvallaringizni kuchaytiring\n"
+            "✅ Avtomatik hisobotlar va grafiklar\n"
+            "✅ Formulalar va pivot jadvallar\n"
+            "💵 $10–$30 · ⚡ 1–3 kun\n\n"
+
+            "📊 *Business Analytics*\n"
+            "✅ Qaysi mahsulot ko'proq sotilishini biling\n"
+            "✅ Zarar keltirayotgan xarajatni toping\n"
+            "✅ KPI va savdo o'sishini kuzating\n"
+            "💵 $20–$50 · ⚡ 3–5 kun\n\n"
+
+            "📈 *Power BI / Tableau*\n"
+            "✅ Har qanday manbadan ma'lumot oling\n"
+            "✅ Interaktiv filtrlar va grafiklar\n"
+            "✅ Avtomatik yangilanish\n"
+            "💵 $30–$80 · ⚡ 3–5 kun\n\n"
+
+            "🌐 *Web / SaaS Dashboard*\n"
+            "✅ Sayt yoki ilovangizga o'rnatiladi\n"
+            "✅ Real vaqt ma'lumotlari\n"
+            "✅ Foydalanuvchi ruxsatlari\n"
+            "💵 $50–$150 · ⚡ 5–8 kun\n\n"
+
+            "⭐ Barcha xizmatlarda — *3 bepul tuzatish* kafolati\n\n"
+            "👇 Hoziroq buyurtma bering:"
         ),
 
         # ── portfolio
@@ -102,12 +120,13 @@ TEXTS = {
         "calc_step2": "📦 Шаг 2/3: Сколько источников данных будет подключено?",
         "calc_step3": "🕐 Шаг 3/3: В какие сроки нужен дашборд?",
         "calc_result": (
-            "💰 *Примерная стоимость*\n\n"
-            "📊 Тип: {dtype}\n"
-            "📦 Источников данных: {sources}\n"
-            "🕐 Сроки: {deadline}\n\n"
-            "💵 *Стоимость: ${min_p} — ${max_p}*\n\n"
-            "_Точная цена согласовывается индивидуально после обсуждения задачи._"
+            "💰 *Taxminiy narx*\n\n"
+            "📊 {dtype}\n"
+            "📦 {sources}\n"
+            "⚡ {deadline}\n\n"
+            "💵 *${min_p} — ${max_p}*\n\n"
+            "✅ Aniq narx loyihani ko'rib chiqib belgilanadi\n"
+            "🎯 Bugun buyurtma bering — muddatni kafolatlaymiz!\n"
         ),
         "calc_src_1_2": "1–2 источника",
         "calc_src_3_5": "3–5 источников",
@@ -126,56 +145,55 @@ TEXTS = {
         "faq_q4": "🔧 Можно ли вносить изменения после сдачи?",
         "faq_q5": "📦 В каком формате передаётся готовый дашборд?",
         "faq_a1": (
-            "💰 *Сколько стоит дашборд?*\n\n"
-            "Стоимость зависит от типа и сложности:\n"
-            "• Excel / Google Sheets — от $10 до $30\n"
-            "• Business Analytics — от $20 до $50\n"
-            "• Power BI / Tableau — от $30 до $80\n"
-            "• Web / SaaS дашборд — от $50 до $150\n\n"
-            "На цену влияют количество источников данных и сроки.\n"
-            "Воспользуйтесь 🧮 *Калькулятором* для быстрой оценки!"
+            "💰 *Narx qancha?*\n\n"
+            "📋 Excel / Google Sheets — $10–$30\n"
+            "📊 Business Analytics — $20–$50\n"
+            "📈 Power BI / Tableau — $30–$80\n"
+            "🌐 Web / SaaS — $50–$150\n\n"
+            "Narxga manba soni va muddat ta'sir qiladi.\n"
+            "🧮 Aniq narxni bilish uchun *Kalkulyator* dan foydalaning!\n\n"
+            "👇 Hoziroq buyurtma bering — narxni kelishamiz:"
         ),
         "faq_a2": (
-            "⏱ *Сколько времени займёт разработка?*\n\n"
-            "• Срочно — 1–2 рабочих дня (надбавка +50%)\n"
-            "• Стандарт — 3–5 рабочих дней\n"
-            "• Гибко — 6–8 рабочих дней (скидка 10%)\n\n"
-            "Сроки обсуждаются при оформлении заявки."
+            "⚡ *Muddat qancha?*\n\n"
+            "⚡ Shoshilinch — 1–2 ish kuni (+50%)\n"
+            "📅 Standart — 3–5 ish kuni\n"
+            "🌿 Moslashuvchan — 6–8 ish kuni (−10%)\n\n"
+            "✅ Buyurtma berilgan kuni ish boshlanadi.\n\n"
+            "👇 Bugun buyurtma bering:"
         ),
         "faq_a3": (
-            "📂 *Какие данные нужны для начала?*\n\n"
-            "В зависимости от задачи нам могут понадобиться:\n\n"
-            "*Для Excel / Google Sheets:*\n"
-            "• Ваши исходные данные в любом формате (Excel, CSV, Google Sheets)\n"
-            "• Описание: какие показатели важны (продажи, расходы, остатки и т.д.)\n"
-            "• Пример или скриншот желаемого результата (если есть)\n\n"
-            "*Для Power BI / Tableau:*\n"
-            "• Источники данных: файлы, база данных, 1C, CRM или API\n"
-            "• Логины/доступы к системам (передаются безопасно)\n"
-            "• Список метрик и фильтров для отчёта\n\n"
-            "*Для Web / SaaS дашборда:*\n"
-            "• Описание функционала и нужных графиков\n"
-            "• Дизайн-референс или примеры (необязательно)\n"
-            "• Источник данных: API, база данных или ручной ввод\n\n"
-            "*Для Business Analytics:*\n"
-            "• Выгрузка данных за нужный период\n"
-            "• Описание бизнес-процесса (что анализируем)\n"
-            "• Цель анализа: рост продаж, оптимизация, отчётность\n\n"
-            "Не знаете с чего начать? Просто напишите — мы сами разберёмся вместе!"
+            "📂 *Boshlash uchun nima kerak?*\n\n"
+            "📋 *Excel / Sheets uchun:*\n"
+            "• Ma'lumot fayli (Excel, CSV, Sheets)\n"
+            "• Muhim ko'rsatkichlar ro'yxati\n\n"
+            "📈 *Power BI / Tableau uchun:*\n"
+            "• Ma'lumot manbai (fayl, baza, 1C, CRM)\n"
+            "• Kerakli metrikalar va filtrlar\n\n"
+            "🌐 *Web Dashboard uchun:*\n"
+            "• Funksional tavsif va grafiklar ro'yxati\n"
+            "• Ma'lumot manbai (API yoki baza)\n\n"
+            "📊 *Business Analytics uchun:*\n"
+            "• Ma'lumotlar yuklamasi\n"
+            "• Tahlil maqsadi\n\n"
+            "💡 Noaniq bo'lsa — shunchaki yozing, biz o'zimiz yo'llaymiz!\n\n"
+            "👇 Hoziroq ariza qoldiring:"
         ),
         "faq_a4": (
-            "🔧 *Можно ли вносить изменения после сдачи?*\n\n"
-            "Да! Мы предоставляем:\n"
-            "• 3 бесплатные правки в течение 7 дней после сдачи\n"
-            "• Платные доработки — по договорённости\n\n"
-            "Серьёзные изменения в логике или структуре обсуждаются отдельно."
+            "🔧 *Topshirilgandan keyin o'zgartirish?*\n\n"
+            "✅ Ha, albatta!\n\n"
+            "• 7 kun ichida *3 ta bepul tuzatish*\n"
+            "• Katta o'zgarishlar — alohida kelishuv\n\n"
+            "Siz natijadan to'liq mamnun bo'lguningizcha ishlaymiz.\n\n"
+            "👇 Buyurtma bering:"
         ),
         "faq_a5": (
-            "📦 *В каком формате передаётся готовый дашборд?*\n\n"
-            "• Excel / Google Sheets — файл или ссылка на таблицу\n"
-            "• Power BI / Tableau — файл отчёта + инструкция\n"
-            "• Web дашборд — ссылка на хостинг или исходный код\n\n"
-            "Всё сопровождается краткой инструкцией по использованию."
+            "📦 *Tayyor ish qanday shaklda beriladi?*\n\n"
+            "📋 Excel / Sheets — fayl yoki havola\n"
+            "📈 Power BI / Tableau — fayl + yo'riqnoma\n"
+            "🌐 Web — hosting havolasi yoki kod\n\n"
+            "✅ Har birida qisqa foydalanish yo'riqnomasi bepul!\n\n"
+            "👇 Hoziroq buyurtma bering:"
         ),
         "btn_back_faq": "⬅️ К списку вопросов",
 
@@ -324,8 +342,10 @@ TEXTS = {
         # ── welcome / menu
         "welcome": (
             "👋 Xush kelibsiz!\n\n"
-            "Biz biznes uchun professional dashboard'lar yaratamiz.\n"
-            "💵 Narx: $10–$150 · ⏱ Muddat: 1–8 kun\n\n"
+            "Biz sizning biznesingiz uchun professional dashboard yaratamiz.\n\n"
+            "💵 $10 dan $150 gacha\n"
+            "⚡ 1 kundan 8 kungacha\n"
+            "✅ 3 ta bepul tuzatish kafolati\n\n"
             "Quyidagi bo'limlardan birini tanlang 👇"
         ),
         "main_menu": "🏠 Asosiy menyu",
@@ -341,17 +361,33 @@ TEXTS = {
         # ── services
         "services_text": (
             "📊 *Xizmatlarimiz*\n\n"
-            "*Business / Analytics dashboardlar*\n"
-            "KPI, savdo, voronka va biznesingizning asosiy ko'rsatkichlarini vizualizatsiya.\n\n"
-            "*Power BI / Tableau*\n"
-            "Har qanday ma'lumot manbasiga ulanuvchi interaktiv hisobotlar.\n\n"
-            "*Web / SaaS dashboardlar*\n"
-            "Mahsulotingiz yoki saytingizga o'rnatilgan maxsus veb-dashboardlar.\n\n"
-            "*Excel / Google Sheets*\n"
-            "Grafiklar, pivot va formulalar bilan avtomatlashtirilgan jadvallar.\n\n"
-            "Bajarish muddati: 1 kundan 8 kungacha\n"
-            "Narxi: $10 dan $150 gacha — murakkabligiga qarab\n\n"
-            "Loyihangizni muhokama qilishga tayyormisiz? Ariza qoldiring! 👇"
+
+            "📋 *Excel / Google Sheets*\n"
+            "✅ Mavjud jadvallaringizni kuchaytiring\n"
+            "✅ Avtomatik hisobotlar va grafiklar\n"
+            "✅ Formulalar va pivot jadvallar\n"
+            "💵 $10–$30 · ⚡ 1–3 kun\n\n"
+
+            "📊 *Business Analytics*\n"
+            "✅ Qaysi mahsulot ko'proq sotilishini biling\n"
+            "✅ Zarar keltirayotgan xarajatni toping\n"
+            "✅ KPI va savdo o'sishini kuzating\n"
+            "💵 $20–$50 · ⚡ 3–5 kun\n\n"
+
+            "📈 *Power BI / Tableau*\n"
+            "✅ Har qanday manbadan ma'lumot oling\n"
+            "✅ Interaktiv filtrlar va grafiklar\n"
+            "✅ Avtomatik yangilanish\n"
+            "💵 $30–$80 · ⚡ 3–5 kun\n\n"
+
+            "🌐 *Web / SaaS Dashboard*\n"
+            "✅ Sayt yoki ilovangizga o'rnatiladi\n"
+            "✅ Real vaqt ma'lumotlari\n"
+            "✅ Foydalanuvchi ruxsatlari\n"
+            "💵 $50–$150 · ⚡ 5–8 kun\n\n"
+
+            "⭐ Barcha xizmatlarda — *3 bepul tuzatish* kafolati\n\n"
+            "👇 Hoziroq buyurtma bering:"
         ),
 
         # ── portfolio
@@ -421,11 +457,12 @@ TEXTS = {
         "calc_step3": "🕐 3/3-qadam: Qanday muddatda dashboard kerak?",
         "calc_result": (
             "💰 *Taxminiy narx*\n\n"
-            "📊 Tur: {dtype}\n"
-            "📦 Ma'lumot manbalari: {sources}\n"
-            "🕐 Muddat: {deadline}\n\n"
-            "💵 *Narx: ${min_p} — ${max_p}*\n\n"
-            "_Aniq narx vazifani muhokama qilgandan so'ng belgilanadi._"
+            "📊 {dtype}\n"
+            "📦 {sources}\n"
+            "⚡ {deadline}\n\n"
+            "💵 *${min_p} — ${max_p}*\n\n"
+            "✅ Aniq narx loyihani ko'rib chiqib belgilanadi\n"
+            "🎯 Bugun buyurtma bering — muddatni kafolatlaymiz!\n"
         ),
         "calc_src_1_2": "1–2 manba",
         "calc_src_3_5": "3–5 manba",
@@ -444,56 +481,55 @@ TEXTS = {
         "faq_q4": "🔧 Topshirilgandan keyin o'zgartirish mumkinmi?",
         "faq_q5": "📦 Tayyor dashboard qanday shaklda beriladi?",
         "faq_a1": (
-            "💰 *Dashboard narxi qancha?*\n\n"
-            "Narx tur va murakkabligiga qarab:\n"
-            "• Excel / Google Sheets — $10 dan $30 gacha\n"
-            "• Business Analytics — $20 dan $50 gacha\n"
-            "• Power BI / Tableau — $30 dan $80 gacha\n"
-            "• Web / SaaS dashboard — $50 dan $150 gacha\n\n"
-            "Narxga ma'lumot manbalari soni va muddat ta'sir qiladi.\n"
-            "Tezkor baholash uchun 🧮 *Kalkulyator* dan foydalaning!"
+            "💰 *Narx qancha?*\n\n"
+            "📋 Excel / Google Sheets — $10–$30\n"
+            "📊 Business Analytics — $20–$50\n"
+            "📈 Power BI / Tableau — $30–$80\n"
+            "🌐 Web / SaaS — $50–$150\n\n"
+            "Narxga manba soni va muddat ta'sir qiladi.\n"
+            "🧮 Aniq narxni bilish uchun *Kalkulyator* dan foydalaning!\n\n"
+            "👇 Hoziroq buyurtma bering — narxni kelishamiz:"
         ),
         "faq_a2": (
-            "⏱ *Ishlab chiqish qancha vaqt oladi?*\n\n"
-            "• Shoshilinch — 1–2 ish kuni (+50% qo'shimcha)\n"
-            "• Standart — 3–5 ish kuni\n"
-            "• Moslashuvchan — 6–8 ish kuni (10% chegirma)\n\n"
-            "Muddat ariza topshirishda kelishiladi."
+            "⚡ *Muddat qancha?*\n\n"
+            "⚡ Shoshilinch — 1–2 ish kuni (+50%)\n"
+            "📅 Standart — 3–5 ish kuni\n"
+            "🌿 Moslashuvchan — 6–8 ish kuni (−10%)\n\n"
+            "✅ Buyurtma berilgan kuni ish boshlanadi.\n\n"
+            "👇 Bugun buyurtma bering:"
         ),
         "faq_a3": (
-            "📂 *Boshlash uchun qanday ma'lumotlar kerak?*\n\n"
-            "Vazifaga qarab quyidagilar kerak bo'lishi mumkin:\n\n"
-            "*Excel / Google Sheets uchun:*\n"
-            "• Istalgan formatdagi dastlabki ma'lumotlar (Excel, CSV, Google Sheets)\n"
-            "• Tavsif: qaysi ko'rsatkichlar muhim (savdo, xarajat, qoldiq va h.k.)\n"
-            "• Kerakli natijaning namunasi yoki skrinshoti (bo'lsa)\n\n"
-            "*Power BI / Tableau uchun:*\n"
-            "• Ma'lumot manbalari: fayllar, baza, 1C, CRM yoki API\n"
-            "• Tizimga kirish ma'lumotlari (xavfsiz tarzda uzatiladi)\n"
-            "• Hisobot uchun metrikalar va filtrlar ro'yxati\n\n"
-            "*Web / SaaS dashboard uchun:*\n"
-            "• Funktsional va kerakli grafiklar tavsifi\n"
-            "• Dizayn namunasi yoki misollar (shart emas)\n"
-            "• Ma'lumot manbai: API, baza yoki qo'lda kiritish\n\n"
-            "*Business Analytics uchun:*\n"
-            "• Kerakli davr uchun ma'lumotlar yuklamasi\n"
-            "• Biznes jarayonining tavsifi (nimani tahlil qilamiz)\n"
-            "• Tahlil maqsadi: savdoni oshirish, optimallashtirish, hisobot\n\n"
-            "Qayerdan boshlashni bilmaysizmi? Yozing — biz birgalikda aniqlaymiz!"
+            "📂 *Boshlash uchun nima kerak?*\n\n"
+            "📋 *Excel / Sheets uchun:*\n"
+            "• Ma'lumot fayli (Excel, CSV, Sheets)\n"
+            "• Muhim ko'rsatkichlar ro'yxati\n\n"
+            "📈 *Power BI / Tableau uchun:*\n"
+            "• Ma'lumot manbai (fayl, baza, 1C, CRM)\n"
+            "• Kerakli metrikalar va filtrlar\n\n"
+            "🌐 *Web Dashboard uchun:*\n"
+            "• Funksional tavsif va grafiklar ro'yxati\n"
+            "• Ma'lumot manbai (API yoki baza)\n\n"
+            "📊 *Business Analytics uchun:*\n"
+            "• Ma'lumotlar yuklamasi\n"
+            "• Tahlil maqsadi\n\n"
+            "💡 Noaniq bo'lsa — shunchaki yozing, biz yo'llaymiz!\n\n"
+            "👇 Hoziroq ariza qoldiring:"
         ),
         "faq_a4": (
-            "🔧 *Topshirilgandan keyin o'zgartirish mumkinmi?*\n\n"
-            "Ha! Biz taqdim etamiz:\n"
-            "• Topshirilgandan keyin 7 kun ichida 3 ta bepul tuzatish\n"
-            "• Pullik qo'shimcha o'zgartirishlar — kelishuv asosida\n\n"
-            "Mantiq yoki tuzilmadagi katta o'zgartirishlar alohida muhokama qilinadi."
+            "🔧 *Topshirilgandan keyin o'zgartirish?*\n\n"
+            "✅ Ha, albatta!\n\n"
+            "• 7 kun ichida *3 ta bepul tuzatish*\n"
+            "• Katta o'zgarishlar — alohida kelishuv\n\n"
+            "Siz natijadan to'liq mamnun bo'lguningizcha ishlaymiz.\n\n"
+            "👇 Buyurtma bering:"
         ),
         "faq_a5": (
-            "📦 *Tayyor dashboard qanday shaklda beriladi?*\n\n"
-            "• Excel / Google Sheets — fayl yoki jadval havolasi\n"
-            "• Power BI / Tableau — hisobot fayli + yo'riqnoma\n"
-            "• Web dashboard — hosting havolasi yoki manba kodi\n\n"
-            "Hamma narsa qisqa foydalanish yo'riqnomasi bilan birga beriladi."
+            "📦 *Tayyor ish qanday shaklda beriladi?*\n\n"
+            "📋 Excel / Sheets — fayl yoki havola\n"
+            "📈 Power BI / Tableau — fayl + yo'riqnoma\n"
+            "🌐 Web — hosting havolasi yoki kod\n\n"
+            "✅ Har birida qisqa foydalanish yo'riqnomasi bepul!\n\n"
+            "👇 Hoziroq buyurtma bering:"
         ),
         "btn_back_faq": "⬅️ Savollarga qaytish",
 
