@@ -731,7 +731,7 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     consult = ctx.user_data.get("consult", {})
     user = update.effective_user
 
-    save_consultation(
+    consult_id = save_consultation(
         user_id=user.id,
         username=user.username,
         first_name=user.first_name,
@@ -740,22 +740,35 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         time=consult.get("time", "—"),
     )
 
-    admin_text = (
-        f"📅 *Yangi konsultatsiya!*\n\n"
-        f"👤 {user.first_name} (@{user.username or '—'})\n"
-        f"📱 Telefon: {phone}\n"
-        f"📅 Kun: {consult.get('day', '—')}\n"
-        f"🕐 Vaqt: {consult.get('time', '—')}\n\n"
-        f"🆔 ID: `{user.id}`"
+    admin_text = t("uz", "admin_consult_notify",
+        consult_id=consult_id,
+        name=user.first_name or "—",
+        username=user.username or "—",
+        phone=phone,
+        day=consult.get("day", "—"),
+        time=consult.get("time", "—"),
+        user_id=user.id,
     )
     try:
         await update.message.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=admin_text,
-            parse_mode=ParseMode.MARKDOWN,
+            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN
         )
     except Exception as e:
         logger.error("Consult admin notify failed: %s", e)
+
+    # Schedule 15-min repeat reminder to admin
+    ctx.job_queue.run_once(
+        _remind_admin_consult,
+        when=900,
+        data={
+            "consult_id": consult_id,
+            "name": user.first_name or "—",
+            "phone": phone,
+            "day": consult.get("day", "—"),
+            "time": consult.get("time", "—"),
+        },
+        name=f"con_remind_{consult_id}",
+    )
 
     await update.message.reply_text(
         t(lang, "consult_confirm",
@@ -1010,28 +1023,34 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
             username=user.username,
         )
 
-    admin_text = (
-        f"🔔 *Новая заявка \\#{order_id}*\n\n"
-        f"👤 Имя: {order.get('name','—')}\n"
-        f"📱 Телефон: {order.get('phone','—')}\n"
-        f"📊 Тип: {order.get('dtype','—')}\n"
-        f"💰 Бюджет/сроки: {order.get('budget','—')}\n"
-        f"📋 Описание: {order.get('desc','—')}\n\n"
-        f"🆔 Telegram ID: `{user.id}`\n"
-        f"👤 Username: @{user.username or 'нет'}\n\n"
-        f"Ответьте командой:\n"
-        f"`/done {order_id}` — выполнено\n"
-        f"`/reject {order_id} причина` — отказ"
+    admin_text = t("uz", "admin_order_notify",
+        order_id=order_id,
+        name=order.get("name", "—"),
+        phone=order.get("phone", "—"),
+        dtype=order.get("dtype", "—"),
+        budget=order.get("budget", "—"),
+        desc=order.get("desc", "—"),
+        user_id=user.id,
+        username=user.username or "—",
     )
     try:
         await ctx.bot.send_message(
-            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN_V2
+            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN
         )
     except Exception as e:
         logger.error("Admin notification failed: %s", e)
 
+    # Schedule 15-min repeat reminder to admin
+    ctx.job_queue.run_once(
+        _remind_admin_order,
+        when=900,
+        data={"order_id": order_id, "order": dict(order)},
+        name=f"ord_remind_{order_id}",
+    )
+
     await query.edit_message_text(
-        t(lang, "order_sent"),
+        t(lang, "order_sent", admin_username=ADMIN_USERNAME),
+        parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
         ]]),
@@ -1051,6 +1070,81 @@ async def order_confirm_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
         t(lang, "order_cancelled"), reply_markup=main_menu_keyboard(lang)
     )
     return MAIN_MENU
+
+
+# ── Admin order/consult reminder jobs ────────────────────────────────────────
+
+async def _remind_admin_order(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    data     = ctx.job.data
+    order_id = data["order_id"]
+    order    = data["order"]
+    text = t("uz", "admin_order_remind",
+        order_id=order_id,
+        name=order.get("name", "—"),
+        phone=order.get("phone", "—"),
+        dtype=order.get("dtype", "—"),
+        budget=order.get("budget", "—"),
+    )
+    try:
+        await ctx.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode=ParseMode.MARKDOWN)
+    except Exception as e:
+        logger.warning("Order remind failed: %s", e)
+
+
+async def _remind_admin_consult(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    data = ctx.job.data
+    text = t("uz", "admin_consult_remind",
+        consult_id=data["consult_id"],
+        name=data["name"],
+        phone=data["phone"],
+        day=data["day"],
+        time=data["time"],
+    )
+    try:
+        await ctx.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode=ParseMode.MARKDOWN)
+    except Exception as e:
+        logger.warning("Consult remind failed: %s", e)
+
+
+async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    if not ctx.args:
+        await update.message.reply_text("Ishlatish: `/accept <order_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
+    order_id = int(ctx.args[0])
+    # Cancel reminder job
+    for job in ctx.job_queue.get_jobs_by_name(f"ord_remind_{order_id}"):
+        job.schedule_removal()
+    order = get_order(order_id)
+    if not order:
+        await update.message.reply_text(t("uz", "admin_accept_404", id=order_id))
+        return
+    await update.message.reply_text(t("uz", "admin_accepted", id=order_id))
+    # Notify user
+    try:
+        await ctx.bot.send_message(
+            chat_id=order["user_id"],
+            text=(
+                f"✅ Sizning buyurtmangiz *#{order_id}* menejer tomonidan qabul qilindi\\!\n"
+                f"Tez orada siz bilan bog'lanamiz\\."
+            ),
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+    except Exception:
+        pass
+
+
+async def admin_accept_consult(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    if not ctx.args:
+        await update.message.reply_text("Ishlatish: `/acceptc <consult_id>`", parse_mode=ParseMode.MARKDOWN)
+        return
+    consult_id = int(ctx.args[0])
+    for job in ctx.job_queue.get_jobs_by_name(f"con_remind_{consult_id}"):
+        job.schedule_removal()
+    await update.message.reply_text(f"✅ Konsultatsiya #{consult_id} qabul qilindi.")
 
 
 # ── Admin: /done /reject /orders ──────────────────────────────────────────────
@@ -1307,6 +1401,8 @@ def main() -> None:
     app.add_handler(CommandHandler("reject",        admin_reject))
     app.add_handler(CommandHandler("orders",        admin_orders))
     app.add_handler(CommandHandler("consultations", admin_consultations))
+    app.add_handler(CommandHandler("accept",        admin_accept_order))
+    app.add_handler(CommandHandler("acceptc",       admin_accept_consult))
     app.add_handler(CommandHandler("myorders",      my_orders))
     # Admin: add portfolio
     add_port_conv = ConversationHandler(

@@ -69,7 +69,11 @@ TEXTS = {
         ),
         "btn_confirm":      "✅ Подтвердить",
         "btn_cancel":       "❌ Отменить",
-        "order_sent":       "🎉 Заявка отправлена! Мы свяжемся с вами в ближайшее время.",
+        "order_sent": (
+            "✅ *Заявка принята!*\n\n"
+            "Наш менеджер свяжется с вами в течение 15–30 минут.\n"
+            "Если не ответили — напишите напрямую: @{admin_username}"
+        ),
         "order_cancelled":  "❌ Заявка отменена. Возвращаю в меню.",
         "order_done_user":  "✅ Ваш заказ *#{order_id}* выполнен! Спасибо за доверие. Свяжитесь с нами: @{admin_username}",
         "order_rejected_user": (
@@ -180,6 +184,42 @@ TEXTS = {
             "Всё сопровождается краткой инструкцией по использованию."
         ),
         "btn_back_faq": "⬅️ К списку вопросов",
+
+        # ── admin order notification
+        "admin_order_notify": (
+            "🔔 *Yangi buyurtma #{order_id}!*\n\n"
+            "👤 {name}\n"
+            "📱 {phone}\n"
+            "📊 {dtype}\n"
+            "💰 {budget}\n"
+            "📋 {desc}\n\n"
+            "🆔 ID: `{user_id}` | @{username}\n\n"
+            "✅ Qabul qilish: `/accept {order_id}`\n"
+            "❌ Rad etish: `/reject {order_id} sabab`"
+        ),
+        "admin_order_remind": (
+            "⏰ *15 daqiqa o'tdi! #{order_id} buyurtmaga javob berilmadi!*\n\n"
+            "👤 {name} | 📱 {phone}\n"
+            "📊 {dtype} | 💰 {budget}\n\n"
+            "✅ Qabul: `/accept {order_id}`\n"
+            "❌ Rad: `/reject {order_id} sabab`"
+        ),
+        "admin_consult_notify": (
+            "📅 *Yangi konsultatsiya #{consult_id}!*\n\n"
+            "👤 {name} (@{username})\n"
+            "📱 {phone}\n"
+            "📅 {day} | 🕐 {time}\n\n"
+            "🆔 ID: `{user_id}`\n\n"
+            "✅ Qabul: `/acceptc {consult_id}`"
+        ),
+        "admin_consult_remind": (
+            "⏰ *15 daqiqa o'tdi! #{consult_id} konsultatsiyaga javob berilmadi!*\n\n"
+            "👤 {name} | 📱 {phone}\n"
+            "📅 {day} | 🕐 {time}\n\n"
+            "✅ Qabul: `/acceptc {consult_id}`"
+        ),
+        "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
+        "admin_accept_404": "❌ #{id} topilmadi.",
 
         # ── portfolio (user)
         "portfolio_select_cat":  "🖼 *Портфолио*\n\nВыберите категорию:",
@@ -353,7 +393,11 @@ TEXTS = {
         ),
         "btn_confirm":      "✅ Tasdiqlash",
         "btn_cancel":       "❌ Bekor qilish",
-        "order_sent":       "🎉 Ariza yuborildi! Tez orada siz bilan bog'lanamiz.",
+        "order_sent": (
+            "✅ *Ariza qabul qilindi!*\n\n"
+            "Menejerimiz 15–30 daqiqa ichida siz bilan bog'lanadi.\n"
+            "Javob bo'lmasa — to'g'ridan-to'g'ri yozing: @{admin_username}"
+        ),
         "order_cancelled":  "❌ Ariza bekor qilindi. Menyuga qaytaraman.",
         "order_done_user":  "✅ *#{order_id}* raqamli buyurtmangiz bajarildi! Ishonch uchun rahmat. Bog'lanish: @{admin_username}",
         "order_rejected_user": (
