@@ -797,7 +797,7 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         username=user.username,
         first_name=user.first_name,
         phone=phone,
-        day=consult.get("day", "—"),
+        day=consult.get("date_str", consult.get("day", "—")),  # store actual date for booking
         time=consult.get("time", "—"),
     )
 
@@ -1267,21 +1267,29 @@ async def admin_reject(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(f"❌ Заявка #{order_id} отклонена.")
 
 
+def _s(text) -> str:
+    """Strip markdown special chars from user-submitted text."""
+    return str(text or "—").replace("*", "").replace("_", " ").replace("`", "").replace("[", "").replace("]", "")
+
+
 async def admin_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         return
     rows = pending_orders()
     if not rows:
-        await update.message.reply_text("Faol arizalar yo'q.")
+        await update.message.reply_text("📋 Faol arizalar yo'q.")
         return
     lines = [f"📋 *Faol arizalar ({len(rows)}):*\n"]
     for r in rows:
         lines.append(
-            f"*#{r['id']}* — {r['name']} | {r['dtype']}\n"
-            f"📱 {r['phone']} | 💰 {r['budget']}\n"
+            f"*#{r['id']}* — {_s(r['name'])} | {_s(r['dtype'])}\n"
+            f"📱 {_s(r['phone'])} | 💰 {_s(r['budget'])}\n"
             f"🕐 {r['created_at'][:16]}\n"
         )
-    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+    try:
+        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+    except Exception:
+        await update.message.reply_text("\n".join(lines))
 
 
 async def admin_consultations(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1294,12 +1302,15 @@ async def admin_consultations(update: Update, ctx: ContextTypes.DEFAULT_TYPE) ->
     lines = [f"📅 *Barcha konsultatsiyalar ({len(rows)}):*\n"]
     for r in rows:
         lines.append(
-            f"*#{r['id']}* — {r['first_name']} (@{r['username'] or '—'})\n"
-            f"📱 {r['phone']}\n"
+            f"*#{r['id']}* — {_s(r['first_name'])} (@{r['username'] or '—'})\n"
+            f"📱 {_s(r['phone'])}\n"
             f"📅 {r['day']} | 🕐 {r['time']}\n"
             f"🗓 {r['created_at'][:16]}\n"
         )
-    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+    try:
+        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+    except Exception:
+        await update.message.reply_text("\n".join(lines))
 
 
 # ── Admin: /broadcast ─────────────────────────────────────────────────────────
