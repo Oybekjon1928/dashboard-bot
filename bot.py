@@ -694,9 +694,7 @@ def main() -> None:
     app.add_handler(user_conv)
 
     logger.info("Bot started. Sheets: %s", "enabled" if SHEETS_ENABLED else "disabled")
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_run(app))
+    asyncio.run(_run(app))
 
 
 async def _health(request):
@@ -712,11 +710,10 @@ async def _run(app: Application) -> None:
     await web.TCPSite(runner, "0.0.0.0", port).start()
     logger.info("Health check running on port %s", port)
 
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling(drop_pending_updates=True)
-
-    await asyncio.Event().wait()
+    async with app:
+        await app.start()
+        await app.updater.start_polling(drop_pending_updates=True)
+        await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
