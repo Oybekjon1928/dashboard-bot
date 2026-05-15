@@ -181,6 +181,9 @@ TEXTS = {
         ),
         "btn_back_faq": "⬅️ К списку вопросов",
 
+        # ── my orders button
+        "btn_myorders": "📋 Мои заявки",
+
         # ── language switch
         "btn_switch_lang": "🌐 O'zbekcha",
         "lang_switched": "Язык изменён на русский.",
@@ -413,6 +416,9 @@ TEXTS = {
             "Hamma narsa qisqa foydalanish yo'riqnomasi bilan birga beriladi."
         ),
         "btn_back_faq": "⬅️ Savollarga qaytish",
+
+        # ── my orders button
+        "btn_myorders": "📋 Mening buyurtmalarim",
 
         # ── language switch
         "btn_switch_lang": "🌐 Русский",

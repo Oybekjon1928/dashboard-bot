@@ -24,7 +24,7 @@ from texts import TEXTS
 from database import (
     init_db, upsert_user, save_order, get_order,
     set_order_status, all_user_ids, pending_orders, user_count,
-    get_user_orders,
+    get_user_orders, save_consultation, all_consultations,
 )
 
 logging.basicConfig(
@@ -100,15 +100,16 @@ def is_admin(user_id: int) -> bool:
 def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "btn_services"),  callback_data="services"),
-            InlineKeyboardButton(t(lang, "btn_faq"),       callback_data="faq"),
+            InlineKeyboardButton(t(lang, "btn_services"),    callback_data="services"),
+            InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
         ],
-        [InlineKeyboardButton(t(lang, "btn_portfolio"),    callback_data="portfolio")],
-        [InlineKeyboardButton(t(lang, "btn_calc"),         callback_data="calc")],
-        [InlineKeyboardButton(t(lang, "btn_consult"),      callback_data="consult")],
-        [InlineKeyboardButton(t(lang, "btn_order"),        callback_data="order")],
+        [InlineKeyboardButton(t(lang, "btn_portfolio"),      callback_data="portfolio")],
+        [InlineKeyboardButton(t(lang, "btn_calc"),           callback_data="calc")],
+        [InlineKeyboardButton(t(lang, "btn_consult"),        callback_data="consult")],
+        [InlineKeyboardButton(t(lang, "btn_order"),          callback_data="order")],
+        [InlineKeyboardButton(t(lang, "btn_myorders"),       callback_data="myorders")],
         [
-            InlineKeyboardButton(t(lang, "btn_contacts"),  callback_data="contacts"),
+            InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
             InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
         ],
     ])
@@ -222,20 +223,14 @@ async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ── My orders ─────────────────────────────────────────────────────────────────
 
-async def my_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = get_lang(ctx)
-    user_id = update.effective_user.id
+async def _myorders_text(lang: str, user_id: int) -> tuple[str, InlineKeyboardMarkup]:
     orders = get_user_orders(user_id)
-
+    nav = InlineKeyboardMarkup([[
+        InlineKeyboardButton(t(lang, "btn_order"),     callback_data="order"),
+        InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu"),
+    ]])
     if not orders:
-        await update.message.reply_text(
-            t(lang, "myorders_empty"),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(t(lang, "btn_order"), callback_data="order")
-            ]]),
-        )
-        return
-
+        return t(lang, "myorders_empty"), nav
     status_map = {
         "pending":  t(lang, "status_pending"),
         "done":     t(lang, "status_done"),
@@ -250,13 +245,22 @@ async def my_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             budget=o["budget"],
             date=o["created_at"][:10],
         ))
-    await update.message.reply_text(
-        "\n".join(lines),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
-        ]]),
-    )
+    return "\n".join(lines), nav
+
+
+async def my_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    lang = get_lang(ctx)
+    text, nav = await _myorders_text(lang, update.effective_user.id)
+    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=nav)
+
+
+async def my_orders_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    text, nav = await _myorders_text(lang, query.from_user.id)
+    await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=nav)
+    return MAIN_MENU
 
 
 # ── Reminder ──────────────────────────────────────────────────────────────────
@@ -370,12 +374,21 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     consult = ctx.user_data.get("consult", {})
     user = update.effective_user
 
+    save_consultation(
+        user_id=user.id,
+        username=user.username,
+        first_name=user.first_name,
+        phone=phone,
+        day=consult.get("day", "—"),
+        time=consult.get("time", "—"),
+    )
+
     admin_text = (
-        f"📅 *Консультация*\n\n"
-        f"👤 {user.first_name} (@{user.username or 'нет'})\n"
-        f"📱 Телефон: {phone}\n"
-        f"📅 День: {consult.get('day', '—')}\n"
-        f"🕐 Время: {consult.get('time', '—')}\n\n"
+        f"📅 *Yangi konsultatsiya!*\n\n"
+        f"👤 {user.first_name} (@{user.username or '—'})\n"
+        f"📱 Telefon: {phone}\n"
+        f"📅 Kun: {consult.get('day', '—')}\n"
+        f"🕐 Vaqt: {consult.get('time', '—')}\n\n"
         f"🆔 ID: `{user.id}`"
     )
     try:
@@ -749,14 +762,32 @@ async def admin_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         return
     rows = pending_orders()
     if not rows:
-        await update.message.reply_text("Нет активных заявок.")
+        await update.message.reply_text("Faol arizalar yo'q.")
         return
-    lines = [f"📋 *Активные заявки ({len(rows)}):*\n"]
+    lines = [f"📋 *Faol arizalar ({len(rows)}):*\n"]
     for r in rows:
         lines.append(
             f"*#{r['id']}* — {r['name']} | {r['dtype']}\n"
             f"📱 {r['phone']} | 💰 {r['budget']}\n"
             f"🕐 {r['created_at'][:16]}\n"
+        )
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+
+
+async def admin_consultations(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    rows = all_consultations()
+    if not rows:
+        await update.message.reply_text("📅 Hali konsultatsiya so'rovlari yo'q.")
+        return
+    lines = [f"📅 *Barcha konsultatsiyalar ({len(rows)}):*\n"]
+    for r in rows:
+        lines.append(
+            f"*#{r['id']}* — {r['first_name']} (@{r['username'] or '—'})\n"
+            f"📱 {r['phone']}\n"
+            f"📅 {r['day']} | 🕐 {r['time']}\n"
+            f"🗓 {r['created_at'][:16]}\n"
         )
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
 
@@ -860,8 +891,9 @@ def main() -> None:
                 CallbackQueryHandler(show_faq_answer,   pattern="^faq_[1-5]$"),
                 CallbackQueryHandler(calc_start,        pattern="^calc$"),
                 CallbackQueryHandler(order_start,       pattern="^order$"),
-                CallbackQueryHandler(consult_start,     pattern="^consult$"),
-                CallbackQueryHandler(switch_lang,       pattern="^switch_lang$"),
+                CallbackQueryHandler(consult_start,       pattern="^consult$"),
+                CallbackQueryHandler(switch_lang,         pattern="^switch_lang$"),
+                CallbackQueryHandler(my_orders_callback,  pattern="^myorders$"),
                 CallbackQueryHandler(calc_got_deadline, pattern="^calc_dl_"),
             ],
             CALC_SOURCES: [
@@ -912,10 +944,11 @@ def main() -> None:
         allow_reentry=True,
     )
 
-    app.add_handler(CommandHandler("done",      admin_done))
-    app.add_handler(CommandHandler("reject",    admin_reject))
-    app.add_handler(CommandHandler("orders",    admin_orders))
-    app.add_handler(CommandHandler("myorders",  my_orders))
+    app.add_handler(CommandHandler("done",          admin_done))
+    app.add_handler(CommandHandler("reject",        admin_reject))
+    app.add_handler(CommandHandler("orders",        admin_orders))
+    app.add_handler(CommandHandler("consultations", admin_consultations))
+    app.add_handler(CommandHandler("myorders",      my_orders))
     app.add_handler(broadcast_conv)
     app.add_handler(user_conv)
 

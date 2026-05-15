@@ -35,6 +35,18 @@ def init_db():
                 created_at  TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS consultations (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER,
+                username   TEXT,
+                first_name TEXT,
+                phone      TEXT,
+                day        TEXT,
+                time       TEXT,
+                created_at TEXT
+            )
+        """)
         conn.commit()
 
 
@@ -96,4 +108,23 @@ def get_user_orders(user_id: int):
         return conn.execute(
             "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC",
             (user_id,)
+        ).fetchall()
+
+
+def save_consultation(user_id, username, first_name, phone, day, time) -> int:
+    with _conn() as conn:
+        cur = conn.execute("""
+            INSERT INTO consultations
+                (user_id, username, first_name, phone, day, time, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, username or "", first_name or "", phone, day, time,
+              datetime.now().isoformat()))
+        conn.commit()
+        return cur.lastrowid
+
+
+def all_consultations():
+    with _conn() as conn:
+        return conn.execute(
+            "SELECT * FROM consultations ORDER BY created_at DESC"
         ).fetchall()
