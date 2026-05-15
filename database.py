@@ -89,3 +89,11 @@ def pending_orders():
 def user_count() -> int:
     with _conn() as conn:
         return conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+
+
+def get_user_orders(user_id: int):
+    with _conn() as conn:
+        return conn.execute(
+            "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC",
+            (user_id,)
+        ).fetchall()

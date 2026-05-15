@@ -24,6 +24,7 @@ from texts import TEXTS
 from database import (
     init_db, upsert_user, save_order, get_order,
     set_order_status, all_user_ids, pending_orders, user_count,
+    get_user_orders,
 )
 
 logging.basicConfig(
@@ -51,6 +52,7 @@ if SHEETS_ENABLED:
 ) = range(10)
 
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
+CONSULT_TIME, CONSULT_PHONE = range(12, 14)
 
 # ── Pricing tables ────────────────────────────────────────────────────────────
 _BASE = {
@@ -103,8 +105,12 @@ def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
         ],
         [InlineKeyboardButton(t(lang, "btn_portfolio"),    callback_data="portfolio")],
         [InlineKeyboardButton(t(lang, "btn_calc"),         callback_data="calc")],
+        [InlineKeyboardButton(t(lang, "btn_consult"),      callback_data="consult")],
         [InlineKeyboardButton(t(lang, "btn_order"),        callback_data="order")],
-        [InlineKeyboardButton(t(lang, "btn_contacts"),     callback_data="contacts")],
+        [
+            InlineKeyboardButton(t(lang, "btn_contacts"),  callback_data="contacts"),
+            InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
+        ],
     ])
 
 
@@ -199,6 +205,200 @@ async def show_portfolio(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             media.append(InputMediaPhoto(media=f.read()))
     await query.message.reply_media_group(media=media)
     await query.message.reply_text(t(lang, "main_menu"), reply_markup=nav)
+    return MAIN_MENU
+
+
+# ── Language switch ──────────────────────────────────────────────────────────
+
+async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = "uz" if get_lang(ctx) == "ru" else "ru"
+    ctx.user_data["lang"] = lang
+    upsert_user(query.from_user.id, query.from_user.username, lang)
+    await query.edit_message_text(t(lang, "welcome"), reply_markup=main_menu_keyboard(lang))
+    return MAIN_MENU
+
+
+# ── My orders ─────────────────────────────────────────────────────────────────
+
+async def my_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    lang = get_lang(ctx)
+    user_id = update.effective_user.id
+    orders = get_user_orders(user_id)
+
+    if not orders:
+        await update.message.reply_text(
+            t(lang, "myorders_empty"),
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(t(lang, "btn_order"), callback_data="order")
+            ]]),
+        )
+        return
+
+    status_map = {
+        "pending":  t(lang, "status_pending"),
+        "done":     t(lang, "status_done"),
+        "rejected": t(lang, "status_rejected"),
+    }
+    lines = [t(lang, "myorders_header")]
+    for o in orders:
+        lines.append(t(lang, "myorders_row",
+            status=status_map.get(o["status"], "⏳"),
+            id=o["id"],
+            dtype=o["dtype"],
+            budget=o["budget"],
+            date=o["created_at"][:10],
+        ))
+    await update.message.reply_text(
+        "\n".join(lines),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
+        ]]),
+    )
+
+
+# ── Reminder ──────────────────────────────────────────────────────────────────
+
+def _cancel_reminder(ctx: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    for job in ctx.job_queue.get_jobs_by_name(f"reminder_{user_id}"):
+        job.schedule_removal()
+
+
+async def _send_reminder(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = ctx.job.data["user_id"]
+    lang    = ctx.job.data["lang"]
+    keyboard = InlineKeyboardMarkup([[
+        InlineKeyboardButton(t(lang, "btn_reminder_continue"), callback_data="reminder_continue"),
+        InlineKeyboardButton(t(lang, "btn_reminder_cancel"),   callback_data="reminder_cancel"),
+    ]])
+    try:
+        await ctx.bot.send_message(
+            chat_id=user_id,
+            text=t(lang, "reminder_text"),
+            reply_markup=keyboard,
+        )
+    except Exception as e:
+        logger.warning("Could not send reminder to %s: %s", user_id, e)
+
+
+async def reminder_continue(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_reply_markup(reply_markup=None)
+
+
+async def reminder_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    ctx.user_data["order"] = {}
+    _cancel_reminder(ctx, query.from_user.id)
+    await query.edit_message_text(
+        t(lang, "reminder_cancelled"),
+        reply_markup=main_menu_keyboard(lang),
+    )
+    return MAIN_MENU
+
+
+# ── Free consultation ─────────────────────────────────────────────────────────
+
+async def consult_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    ctx.user_data["consult"] = {}
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(t(lang, "consult_day_0"), callback_data="cday_0"),
+            InlineKeyboardButton(t(lang, "consult_day_1"), callback_data="cday_1"),
+            InlineKeyboardButton(t(lang, "consult_day_2"), callback_data="cday_2"),
+        ],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
+    ])
+    await query.edit_message_text(
+        t(lang, "consult_step1"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=keyboard,
+    )
+    return CONSULT_TIME
+
+
+async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    day_index = int(query.data.split("_")[1])
+    ctx.user_data["consult"]["day"] = t(lang, f"consult_day_{day_index}")
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(t(lang, "consult_t_9"),  callback_data="ctime_9"),
+            InlineKeyboardButton(t(lang, "consult_t_11"), callback_data="ctime_11"),
+            InlineKeyboardButton(t(lang, "consult_t_13"), callback_data="ctime_13"),
+        ],
+        [
+            InlineKeyboardButton(t(lang, "consult_t_15"), callback_data="ctime_15"),
+            InlineKeyboardButton(t(lang, "consult_t_17"), callback_data="ctime_17"),
+        ],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
+    ])
+    await query.edit_message_text(
+        t(lang, "consult_step2"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=keyboard,
+    )
+    return CONSULT_PHONE
+
+
+async def consult_got_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    time_key = query.data.split("_")[1]
+    ctx.user_data["consult"]["time"] = t(lang, f"consult_t_{time_key}")
+    await query.edit_message_text(
+        t(lang, "consult_step3"),
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return CONSULT_PHONE
+
+
+async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    lang = get_lang(ctx)
+    phone = update.message.text.strip()
+    consult = ctx.user_data.get("consult", {})
+    user = update.effective_user
+
+    admin_text = (
+        f"📅 *Консультация*\n\n"
+        f"👤 {user.first_name} (@{user.username or 'нет'})\n"
+        f"📱 Телефон: {phone}\n"
+        f"📅 День: {consult.get('day', '—')}\n"
+        f"🕐 Время: {consult.get('time', '—')}\n\n"
+        f"🆔 ID: `{user.id}`"
+    )
+    try:
+        await update.message.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=admin_text,
+            parse_mode=ParseMode.MARKDOWN,
+        )
+    except Exception as e:
+        logger.error("Consult admin notify failed: %s", e)
+
+    await update.message.reply_text(
+        t(lang, "consult_confirm",
+          day=consult.get("day", "—"),
+          time=consult.get("time", "—"),
+          phone=phone,
+          admin_username=ADMIN_USERNAME),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
+        ]]),
+    )
+    ctx.user_data["consult"] = {}
     return MAIN_MENU
 
 
@@ -347,6 +547,17 @@ async def order_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     lang = get_lang(ctx)
     ctx.user_data["order"] = {}
+
+    # Schedule 1-hour reminder
+    user_id = query.from_user.id
+    _cancel_reminder(ctx, user_id)
+    ctx.job_queue.run_once(
+        _send_reminder,
+        when=3600,
+        data={"user_id": user_id, "lang": lang},
+        name=f"reminder_{user_id}",
+    )
+
     await query.edit_message_text(t(lang, "order_start"), parse_mode=ParseMode.MARKDOWN)
     return ORDER_NAME
 
@@ -456,6 +667,7 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         ]]),
     )
     ctx.user_data["order"] = {}
+    _cancel_reminder(ctx, query.from_user.id)
     return MAIN_MENU
 
 
@@ -464,6 +676,7 @@ async def order_confirm_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     await query.answer()
     lang = get_lang(ctx)
     ctx.user_data["order"] = {}
+    _cancel_reminder(ctx, query.from_user.id)
     await query.edit_message_text(
         t(lang, "order_cancelled"), reply_markup=main_menu_keyboard(lang)
     )
@@ -639,15 +852,16 @@ def main() -> None:
                 CallbackQueryHandler(lang_selected, pattern="^lang_(ru|uz)$"),
             ],
             MAIN_MENU: [
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
-                CallbackQueryHandler(show_services,    pattern="^services$"),
-                CallbackQueryHandler(show_portfolio,   pattern="^portfolio$"),
-                CallbackQueryHandler(show_contacts,    pattern="^contacts$"),
-                CallbackQueryHandler(show_faq,         pattern="^faq$"),
-                CallbackQueryHandler(show_faq_answer,  pattern="^faq_[1-5]$"),
-                CallbackQueryHandler(calc_start,       pattern="^calc$"),
-                CallbackQueryHandler(order_start,      pattern="^order$"),
-                # calculator last step lives here (deadline → result)
+                CallbackQueryHandler(show_main_menu,    pattern="^main_menu$"),
+                CallbackQueryHandler(show_services,     pattern="^services$"),
+                CallbackQueryHandler(show_portfolio,    pattern="^portfolio$"),
+                CallbackQueryHandler(show_contacts,     pattern="^contacts$"),
+                CallbackQueryHandler(show_faq,          pattern="^faq$"),
+                CallbackQueryHandler(show_faq_answer,   pattern="^faq_[1-5]$"),
+                CallbackQueryHandler(calc_start,        pattern="^calc$"),
+                CallbackQueryHandler(order_start,       pattern="^order$"),
+                CallbackQueryHandler(consult_start,     pattern="^consult$"),
+                CallbackQueryHandler(switch_lang,       pattern="^switch_lang$"),
                 CallbackQueryHandler(calc_got_deadline, pattern="^calc_dl_"),
             ],
             CALC_SOURCES: [
@@ -678,18 +892,30 @@ def main() -> None:
                 CallbackQueryHandler(order_confirm_yes, pattern="^confirm_yes$"),
                 CallbackQueryHandler(order_confirm_no,  pattern="^confirm_no$"),
             ],
+            CONSULT_TIME: [
+                CallbackQueryHandler(consult_got_day,  pattern="^cday_"),
+                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
+            ],
+            CONSULT_PHONE: [
+                CallbackQueryHandler(consult_got_time, pattern="^ctime_"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, consult_got_phone),
+                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
+            ],
         },
         fallbacks=[
             CommandHandler("start", start),
+            CallbackQueryHandler(reminder_cancel, pattern="^reminder_cancel$"),
+            CallbackQueryHandler(reminder_continue, pattern="^reminder_continue$"),
             MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
         ],
         per_message=False,
         allow_reentry=True,
     )
 
-    app.add_handler(CommandHandler("done",    admin_done))
-    app.add_handler(CommandHandler("reject",  admin_reject))
-    app.add_handler(CommandHandler("orders",  admin_orders))
+    app.add_handler(CommandHandler("done",      admin_done))
+    app.add_handler(CommandHandler("reject",    admin_reject))
+    app.add_handler(CommandHandler("orders",    admin_orders))
+    app.add_handler(CommandHandler("myorders",  my_orders))
     app.add_handler(broadcast_conv)
     app.add_handler(user_conv)
 

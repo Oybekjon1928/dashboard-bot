@@ -180,6 +180,56 @@ TEXTS = {
             "Всё сопровождается краткой инструкцией по использованию."
         ),
         "btn_back_faq": "⬅️ К списку вопросов",
+
+        # ── language switch
+        "btn_switch_lang": "🌐 O'zbekcha",
+        "lang_switched": "Язык изменён на русский.",
+
+        # ── my orders
+        "myorders_empty": "📭 У вас пока нет заявок. Оставьте первую заявку!",
+        "myorders_header": "📋 *Ваши заявки:*\n",
+        "myorders_row": "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
+        "status_pending":  "⏳ В обработке",
+        "status_done":     "✅ Выполнено",
+        "status_rejected": "❌ Отклонено",
+
+        # ── reminder
+        "reminder_text": (
+            "⏰ Вы начали оформлять заявку, но не завершили.\n\n"
+            "Хотите продолжить или отменить?"
+        ),
+        "btn_reminder_continue": "▶️ Продолжить",
+        "btn_reminder_cancel":   "❌ Отменить заявку",
+        "reminder_cancelled": "Заявка отменена. Возвращаю в меню.",
+
+        # ── free consultation
+        "btn_consult":      "📅 Бесплатная консультация",
+        "consult_step1":    "📅 *Бесплатная консультация*\n\nВыберите удобный день:",
+        "consult_step2":    "🕐 Выберите удобное время:",
+        "consult_step3":    "📱 Введите ваш *номер телефона* для подтверждения:",
+        "consult_confirm": (
+            "✅ *Консультация забронирована!*\n\n"
+            "📅 День: {day}\n"
+            "🕐 Время: {time}\n\n"
+            "Мы свяжемся с вами по номеру {phone} для подтверждения.\n"
+            "По вопросам: @{admin_username}"
+        ),
+        "admin_consult": (
+            "📅 *Запрос на консультацию!*\n\n"
+            "👤 {name} (@{username})\n"
+            "📱 Телефон: {phone}\n"
+            "📅 День: {day}\n"
+            "🕐 Время: {time}\n\n"
+            "🆔 ID: `{user_id}`"
+        ),
+        "consult_day_0": "Сегодня",
+        "consult_day_1": "Завтра",
+        "consult_day_2": "Послезавтра",
+        "consult_t_9":  "09:00",
+        "consult_t_11": "11:00",
+        "consult_t_13": "13:00",
+        "consult_t_15": "15:00",
+        "consult_t_17": "17:00",
     },
 
     "uz": {
@@ -363,5 +413,55 @@ TEXTS = {
             "Hamma narsa qisqa foydalanish yo'riqnomasi bilan birga beriladi."
         ),
         "btn_back_faq": "⬅️ Savollarga qaytish",
+
+        # ── language switch
+        "btn_switch_lang": "🌐 Русский",
+        "lang_switched": "Til o'zbekchaga o'zgartirildi.",
+
+        # ── my orders
+        "myorders_empty": "📭 Sizda hali arizalar yo'q. Birinchi arizani qoldiring!",
+        "myorders_header": "📋 *Sizning arizalaringiz:*\n",
+        "myorders_row": "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
+        "status_pending":  "⏳ Ko'rib chiqilmoqda",
+        "status_done":     "✅ Bajarildi",
+        "status_rejected": "❌ Rad etildi",
+
+        # ── reminder
+        "reminder_text": (
+            "⏰ Siz ariza to'ldirishni boshladingiz, lekin tugatmadingiz.\n\n"
+            "Davom etmoqchimisiz yoki bekor qilmoqchimisiz?"
+        ),
+        "btn_reminder_continue": "▶️ Davom etish",
+        "btn_reminder_cancel":   "❌ Arizani bekor qilish",
+        "reminder_cancelled": "Ariza bekor qilindi. Menyuga qaytaraman.",
+
+        # ── free consultation
+        "btn_consult":      "📅 Bepul konsultatsiya",
+        "consult_step1":    "📅 *Bepul konsultatsiya*\n\nQulay kunni tanlang:",
+        "consult_step2":    "🕐 Qulay vaqtni tanlang:",
+        "consult_step3":    "📱 Tasdiqlash uchun *telefon raqamingizni* kiriting:",
+        "consult_confirm": (
+            "✅ *Konsultatsiya band qilindi!*\n\n"
+            "📅 Kun: {day}\n"
+            "🕐 Vaqt: {time}\n\n"
+            "Siz bilan {phone} raqami orqali bog'lanamiz.\n"
+            "Savollar uchun: @{admin_username}"
+        ),
+        "admin_consult": (
+            "📅 *Konsultatsiya so'rovi!*\n\n"
+            "👤 {name} (@{username})\n"
+            "📱 Telefon: {phone}\n"
+            "📅 Kun: {day}\n"
+            "🕐 Vaqt: {time}\n\n"
+            "🆔 ID: `{user_id}`"
+        ),
+        "consult_day_0": "Bugun",
+        "consult_day_1": "Ertaga",
+        "consult_day_2": "Indiniga",
+        "consult_t_9":  "09:00",
+        "consult_t_11": "11:00",
+        "consult_t_13": "13:00",
+        "consult_t_15": "15:00",
+        "consult_t_17": "17:00",
     },
 }
