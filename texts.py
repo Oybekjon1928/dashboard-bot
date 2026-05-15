@@ -509,6 +509,42 @@ TEXTS = {
         ),
         "btn_back_faq": "⬅️ Savollarga qaytish",
 
+        # ── admin order/consult notifications
+        "admin_order_notify": (
+            "🔔 *Yangi buyurtma #{order_id}!*\n\n"
+            "👤 {name}\n"
+            "📱 {phone}\n"
+            "📊 {dtype}\n"
+            "💰 {budget}\n"
+            "📋 {desc}\n\n"
+            "🆔 ID: `{user_id}` | @{username}\n\n"
+            "✅ Qabul qilish: `/accept {order_id}`\n"
+            "❌ Rad etish: `/reject {order_id} sabab`"
+        ),
+        "admin_order_remind": (
+            "⏰ *15 daqiqa o'tdi! #{order_id} buyurtmaga javob berilmadi!*\n\n"
+            "👤 {name} | 📱 {phone}\n"
+            "📊 {dtype} | 💰 {budget}\n\n"
+            "✅ Qabul: `/accept {order_id}`\n"
+            "❌ Rad: `/reject {order_id} sabab`"
+        ),
+        "admin_consult_notify": (
+            "📅 *Yangi konsultatsiya #{consult_id}!*\n\n"
+            "👤 {name} (@{username})\n"
+            "📱 {phone}\n"
+            "📅 {day} | 🕐 {time}\n\n"
+            "🆔 ID: `{user_id}`\n\n"
+            "✅ Qabul: `/acceptc {consult_id}`"
+        ),
+        "admin_consult_remind": (
+            "⏰ *15 daqiqa o'tdi! #{consult_id} konsultatsiyaga javob berilmadi!*\n\n"
+            "👤 {name} | 📱 {phone}\n"
+            "📅 {day} | 🕐 {time}\n\n"
+            "✅ Qabul: `/acceptc {consult_id}`"
+        ),
+        "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
+        "admin_accept_404": "❌ #{id} topilmadi.",
+
         # ── portfolio (user)
         "portfolio_select_cat":  "🖼 *Portfolio*\n\nKategoriyani tanlang:",
         "portfolio_empty_cat":   "📭 Bu kategoriyada hali ishlar yo'q.",
