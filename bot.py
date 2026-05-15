@@ -54,10 +54,10 @@ BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
 
 # ── Pricing tables ────────────────────────────────────────────────────────────
 _BASE = {
-    "type_excel":     (50,  100),
-    "type_analytics": (80,  150),
-    "type_bi":        (100, 200),
-    "type_web":       (150, 300),
+    "type_excel":     (10, 30),
+    "type_analytics": (20, 50),
+    "type_bi":        (30, 80),
+    "type_web":       (50, 150),
 }
 _SRC_MULT = {
     "calc_src_1_2": 1.0,
