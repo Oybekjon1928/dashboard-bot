@@ -834,7 +834,7 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
           day=consult.get("day", "—"),
           time=consult.get("time", "—"),
           phone=phone,
-          admin_username=ADMIN_USERNAME),
+          admin_username=ADMIN_USERNAME.replace("_", "\\_")),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
@@ -1102,7 +1102,7 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     )
 
     await query.edit_message_text(
-        t(lang, "order_sent", admin_username=ADMIN_USERNAME),
+        t(lang, "order_sent", admin_username=ADMIN_USERNAME.replace("_", "\\_")),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
