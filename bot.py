@@ -21,10 +21,11 @@ from telegram.constants import ParseMode
 
 from config import BOT_TOKEN, ADMIN_ID, ADMIN_USERNAME, PORTFOLIO_DIR, SHEETS_ENABLED, CHANNEL_URL
 from texts import TEXTS
+from datetime import datetime, timedelta
 from database import (
     init_db, upsert_user, save_order, get_order,
     set_order_status, all_user_ids, pending_orders, user_count,
-    get_user_orders, save_consultation, all_consultations,
+    get_user_orders, save_consultation, all_consultations, get_booked_times,
     add_portfolio_item, get_portfolio_by_category,
     get_portfolio_item, get_all_portfolio, delete_portfolio_item,
 )
@@ -671,6 +672,37 @@ async def reminder_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
 
 # ── Free consultation ─────────────────────────────────────────────────────────
 
+_CONSULT_TIMES = ["09:00", "11:00", "13:00", "15:00", "17:00"]
+_TIME_CB = {"09:00": "9", "11:00": "11", "13:00": "13", "15:00": "15", "17:00": "17"}
+
+
+def _day_label(lang: str, day_index: int) -> str:
+    date = datetime.now() + timedelta(days=day_index)
+    name = t(lang, f"consult_day_{day_index}")
+    return f"{name} ({date.strftime('%d-%b')})"
+
+
+def _day_date_str(day_index: int) -> str:
+    return (datetime.now() + timedelta(days=day_index)).strftime("%Y-%m-%d")
+
+
+def _time_keyboard(lang: str, date_str: str) -> InlineKeyboardMarkup:
+    booked = get_booked_times(date_str)
+    rows, row = [], []
+    for slot in _CONSULT_TIMES:
+        if slot in booked:
+            row.append(InlineKeyboardButton(f"❌ {slot}", callback_data="ctime_booked"))
+        else:
+            row.append(InlineKeyboardButton(f"✅ {slot}", callback_data=f"ctime_{_TIME_CB[slot]}"))
+        if len(row) == 3:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    rows.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
+    return InlineKeyboardMarkup(rows)
+
+
 async def consult_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -678,9 +710,11 @@ async def consult_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     ctx.user_data["consult"] = {}
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "consult_day_0"), callback_data="cday_0"),
-            InlineKeyboardButton(t(lang, "consult_day_1"), callback_data="cday_1"),
-            InlineKeyboardButton(t(lang, "consult_day_2"), callback_data="cday_2"),
+            InlineKeyboardButton(_day_label(lang, 0), callback_data="cday_0"),
+            InlineKeyboardButton(_day_label(lang, 1), callback_data="cday_1"),
+        ],
+        [
+            InlineKeyboardButton(_day_label(lang, 2), callback_data="cday_2"),
         ],
         [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
     ])
@@ -697,19 +731,22 @@ async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     await query.answer()
     lang = get_lang(ctx)
     day_index = int(query.data.split("_")[1])
-    ctx.user_data["consult"]["day"] = t(lang, f"consult_day_{day_index}")
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(t(lang, "consult_t_9"),  callback_data="ctime_9"),
-            InlineKeyboardButton(t(lang, "consult_t_11"), callback_data="ctime_11"),
-            InlineKeyboardButton(t(lang, "consult_t_13"), callback_data="ctime_13"),
-        ],
-        [
-            InlineKeyboardButton(t(lang, "consult_t_15"), callback_data="ctime_15"),
-            InlineKeyboardButton(t(lang, "consult_t_17"), callback_data="ctime_17"),
-        ],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
-    ])
+    date_str  = _day_date_str(day_index)
+    ctx.user_data["consult"]["day"]      = _day_label(lang, day_index)
+    ctx.user_data["consult"]["date_str"] = date_str
+
+    keyboard = _time_keyboard(lang, date_str)
+    booked_count = len(get_booked_times(date_str))
+
+    if booked_count == len(_CONSULT_TIMES):
+        await query.edit_message_text(
+            t(lang, "all_slots_booked"),
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
+            ]]),
+        )
+        return CONSULT_TIME
+
     await query.edit_message_text(
         t(lang, "consult_step2"),
         parse_mode=ParseMode.MARKDOWN,
@@ -718,12 +755,28 @@ async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     return CONSULT_PHONE
 
 
+async def consult_booked_slot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    lang  = get_lang(ctx)
+    await query.answer(t(lang, "booked_slot_alert"), show_alert=True)
+    return CONSULT_PHONE
+
+
 async def consult_got_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
+    date_str = ctx.user_data.get("consult", {}).get("date_str", "")
     time_key = query.data.split("_")[1]
-    ctx.user_data["consult"]["time"] = t(lang, f"consult_t_{time_key}")
+    slot     = {"9": "09:00", "11": "11:00", "13": "13:00", "15": "15:00", "17": "17:00"}.get(time_key, "")
+
+    # Double-check slot is still free
+    if slot in get_booked_times(date_str):
+        await query.answer(t(lang, "booked_slot_alert"), show_alert=True)
+        await query.edit_message_reply_markup(reply_markup=_time_keyboard(lang, date_str))
+        return CONSULT_PHONE
+
+    ctx.user_data["consult"]["time"] = slot
     await query.edit_message_text(
         t(lang, "consult_step3"),
         parse_mode=ParseMode.MARKDOWN,
@@ -1379,9 +1432,10 @@ def main() -> None:
                 CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
             ],
             CONSULT_PHONE: [
-                CallbackQueryHandler(consult_got_time, pattern="^ctime_"),
+                CallbackQueryHandler(consult_booked_slot, pattern="^ctime_booked$"),
+                CallbackQueryHandler(consult_got_time,    pattern="^ctime_"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, consult_got_phone),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
+                CallbackQueryHandler(show_main_menu,      pattern="^main_menu$"),
             ],
         },
         fallbacks=[

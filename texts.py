@@ -325,9 +325,11 @@ TEXTS = {
             "🕐 Время: {time}\n\n"
             "🆔 ID: `{user_id}`"
         ),
-        "consult_day_0": "Сегодня",
-        "consult_day_1": "Завтра",
-        "consult_day_2": "Послезавтра",
+        "consult_day_0": "Bugun",
+        "consult_day_1": "Ertaga",
+        "consult_day_2": "Indiniga",
+        "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
+        "all_slots_booked": "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
         "consult_t_9":  "09:00",
         "consult_t_11": "11:00",
         "consult_t_13": "13:00",
@@ -664,6 +666,8 @@ TEXTS = {
         "consult_day_0": "Bugun",
         "consult_day_1": "Ertaga",
         "consult_day_2": "Indiniga",
+        "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
+        "all_slots_booked": "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
         "consult_t_9":  "09:00",
         "consult_t_11": "11:00",
         "consult_t_13": "13:00",

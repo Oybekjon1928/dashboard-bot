@@ -123,6 +123,14 @@ def get_user_orders(user_id: int):
         ).fetchall()
 
 
+def get_booked_times(date_str: str) -> list:
+    with _conn() as conn:
+        rows = conn.execute(
+            "SELECT time FROM consultations WHERE day = ?", (date_str,)
+        ).fetchall()
+        return [r["time"] for r in rows]
+
+
 def save_consultation(user_id, username, first_name, phone, day, time) -> int:
     with _conn() as conn:
         cur = conn.execute("""
