@@ -584,7 +584,7 @@ TEXTS = {
         "btn_port_prev":      "⬅️",
         "btn_port_next":      "➡️",
         "btn_port_cats":      "🗂 Kategoriyalar",
-        "btn_port_order":     "📝 Shunday buyurtma berish",
+        "btn_port_order":     "📝 Shundan buyurtma berish",
 
         # ── portfolio (admin)
         "adm_port_step_cat":   "📂 Kategoriyani tanlang:",
