@@ -181,6 +181,9 @@ TEXTS = {
         ),
         "btn_back_faq": "⬅️ К списку вопросов",
 
+        # ── channel
+        "btn_channel": "📢 Наш канал",
+
         # ── my orders button
         "btn_myorders": "📋 Мои заявки",
 
@@ -416,6 +419,9 @@ TEXTS = {
             "Hamma narsa qisqa foydalanish yo'riqnomasi bilan birga beriladi."
         ),
         "btn_back_faq": "⬅️ Savollarga qaytish",
+
+        # ── channel
+        "btn_channel": "📢 Bizning kanal",
 
         # ── my orders button
         "btn_myorders": "📋 Mening buyurtmalarim",

@@ -19,7 +19,7 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-from config import BOT_TOKEN, ADMIN_ID, ADMIN_USERNAME, PORTFOLIO_DIR, SHEETS_ENABLED
+from config import BOT_TOKEN, ADMIN_ID, ADMIN_USERNAME, PORTFOLIO_DIR, SHEETS_ENABLED, CHANNEL_URL
 from texts import TEXTS
 from database import (
     init_db, upsert_user, save_order, get_order,
@@ -108,6 +108,7 @@ def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(t(lang, "btn_consult"),        callback_data="consult")],
         [InlineKeyboardButton(t(lang, "btn_order"),          callback_data="order")],
         [InlineKeyboardButton(t(lang, "btn_myorders"),       callback_data="myorders")],
+        [InlineKeyboardButton(t(lang, "btn_channel"),        url=CHANNEL_URL)],
         [
             InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
             InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
