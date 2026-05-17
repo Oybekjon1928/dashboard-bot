@@ -5,18 +5,18 @@ TEXTS = {
 
         # ── welcome
         "welcome": (
-            "👋 Добро пожаловать!\n\n"
-            "Я — специалист по поведению потребителей и бренд-стратегии.\n\n"
+            "👋 Добро пожаловать в *Markenti*!\n\n"
+            "Я — специалист по *Consumer Behaviour & Brand Strategy*.\n\n"
             "Здесь вы найдёте моё портфолио, исследовательские опросы\n"
             "и возможность связаться со мной.\n\n"
-            "Выберите раздел 👇"
+            "👇 Выберите раздел:"
         ),
 
         # ── menu buttons
-        "btn_portfolio":   "🖼 Портфолио",
+        "btn_portfolio":   "🗂 Портфолио",
         "btn_surveys":     "📋 Опросы",
         "btn_about":       "🙋 Обо мне",
-        "btn_contact":     "📩 Связаться",
+        "btn_contact":     "✉️ Связаться",
         "btn_channel":     "📢 Канал",
         "btn_switch_lang": "🌐 O'zbekcha",
         "btn_main_menu":   "🏠 Главное меню",
@@ -24,23 +24,22 @@ TEXTS = {
         # ── about me
         "about_text": (
             "🙋 *Обо мне*\n\n"
-            "Специалист по поведению потребителей и бренд-стратегии.\n\n"
+            "Специалист по *Consumer Behaviour & Brand Strategy*.\n\n"
             "Помогаю брендам понять свою аудиторию и выстроить стратегии, "
             "которые конвертируют. Открыт к фриланс-проектам и постоянному сотрудничеству.\n\n"
-            "📊 *Специализация:*\n"
-            "• Анализ поведения потребителей\n"
-            "• Позиционирование и бренд-стратегия\n"
-            "• SMM и управление контентом\n\n"
-            "📩 Напишите мне — обсудим ваш проект!"
+            "▸ Consumer Behaviour\n"
+            "▸ Brand Strategy\n"
+            "▸ SMM Manager\n\n"
+            "✉️ _Напишите мне — обсудим ваш проект!_"
         ),
 
         # ── contact
         "contact_prompt": (
-            "📩 *Связаться со мной*\n\n"
-            "Напишите ваше сообщение — я отвечу как можно скорее."
+            "✉️ *Связаться со мной*\n\n"
+            "Напишите ваше сообщение — я отвечу как можно скорее 👇"
         ),
         "contact_sent": (
-            "✅ Сообщение отправлено!\n\n"
+            "✅ *Сообщение отправлено!*\n\n"
             "Я свяжусь с вами в ближайшее время."
         ),
         "admin_contact_notify": (
@@ -51,8 +50,8 @@ TEXTS = {
         ),
 
         # ── surveys (user)
-        "surveys_title":   "📋 *Опросы*\n\nВыберите опрос:",
-        "surveys_empty":   "📭 Сейчас нет активных опросов. Загляните позже!",
+        "surveys_title":    "📋 *Опросы*\n\nВыберите опрос:",
+        "surveys_empty":    "📭 Сейчас нет активных опросов. Загляните позже!",
         "survey_intro": (
             "📋 *{title}*\n\n"
             "Добро пожаловать в опрос! Отвечайте честно — "
@@ -61,9 +60,9 @@ TEXTS = {
             "Нажмите *Начать*, чтобы приступить."
         ),
         "btn_survey_start": "▶️ Начать опрос",
-        "survey_question":  "❓ *Вопрос {n}/{total}:*\n\n{text}",
+        "survey_question":  "📌 *Вопрос {n} / {total}*\n\n{text}",
         "survey_done": (
-            "✅ *Опрос завершён!*\n\n"
+            "🎉 *Опрос завершён!*\n\n"
             "Спасибо за участие 🙏\n"
             "Ваши ответы помогают в исследовании."
         ),
@@ -76,12 +75,12 @@ TEXTS = {
         ),
 
         # ── portfolio
-        "portfolio_select_cat": "🖼 *Портфолио*\n\nВыберите категорию:",
+        "portfolio_select_cat": "🗂 *Портфолио*\n\nВыберите категорию:",
         "portfolio_empty_cat":  "📭 В этой категории пока нет работ.",
         "portfolio_item":       "*{title}*\n\n{desc}\n",
         "portfolio_demo":       "\n🔗 Демо: {url}",
         "portfolio_video":      "\n🎬 Видео: {url}",
-        "portfolio_nav_btn":    "{cur}/{total}",
+        "portfolio_nav_btn":    "{cur} / {total}",
         "btn_port_prev":        "⬅️",
         "btn_port_next":        "➡️",
         "btn_port_cats":        "🗂 Категории",
@@ -127,18 +126,18 @@ TEXTS = {
 
         # ── welcome
         "welcome": (
-            "👋 Xush kelibsiz!\n\n"
-            "Men — Consumer Behaviour va Brand Strategy mutaxassisi.\n\n"
+            "👋 *Markenti*ga xush kelibsiz!\n\n"
+            "Men — *Consumer Behaviour & Brand Strategy* mutaxassisi.\n\n"
             "Bu yerda mening portfoliom, tadqiqot so'rovlari\n"
             "va men bilan bog'lanish imkoniyati mavjud.\n\n"
-            "Bo'limni tanlang 👇"
+            "👇 Bo'limni tanlang:"
         ),
 
         # ── menu buttons
-        "btn_portfolio":   "🖼 Portfolio",
+        "btn_portfolio":   "🗂 Portfolio",
         "btn_surveys":     "📋 So'rovlar",
         "btn_about":       "🙋 Men haqimda",
-        "btn_contact":     "📩 Bog'lanish",
+        "btn_contact":     "✉️ Bog'lanish",
         "btn_channel":     "📢 Kanal",
         "btn_switch_lang": "🌐 Русский",
         "btn_main_menu":   "🏠 Asosiy menyu",
@@ -150,20 +149,19 @@ TEXTS = {
             "Brendlarga o'z auditoriyasini tushunishga va konversiyaga aylantiruvchi "
             "strategiyalar yaratishga yordam beraman. Frilanser loyihalar va doimiy "
             "hamkorlikka tayyorman.\n\n"
-            "📊 *Mutaxassisligim:*\n"
-            "• Consumer Behaviour\n"
-            "• Brand Strategy\n"
-            "• SMM Manager\n\n"
-            "📩 Yozing — loyihangizni muhokama qilamiz!"
+            "▸ Consumer Behaviour\n"
+            "▸ Brand Strategy\n"
+            "▸ SMM Manager\n\n"
+            "✉️ _Yozing — loyihangizni muhokama qilamiz!_"
         ),
 
         # ── contact
         "contact_prompt": (
-            "📩 *Men bilan bog'lanish*\n\n"
-            "Xabaringizni yozing — imkon qadar tez javob beraman."
+            "✉️ *Men bilan bog'lanish*\n\n"
+            "Xabaringizni yozing — imkon qadar tez javob beraman 👇"
         ),
         "contact_sent": (
-            "✅ Xabar yuborildi!\n\n"
+            "✅ *Xabar yuborildi!*\n\n"
             "Yaqin orada siz bilan bog'lanaman."
         ),
         "admin_contact_notify": (
@@ -174,19 +172,19 @@ TEXTS = {
         ),
 
         # ── surveys (user)
-        "surveys_title":   "📋 *So'rovlar*\n\nSo'rovni tanlang:",
-        "surveys_empty":   "📭 Hozirda faol so'rovlar yo'q. Keyinroq qarang!",
+        "surveys_title":    "📋 *So'rovlar*\n\nSo'rovni tanlang:",
+        "surveys_empty":    "📭 Hozirda faol so'rovlar yo'q. Keyinroq qarang!",
         "survey_intro": (
             "📋 *{title}*\n\n"
             "So'rovga xush kelibsiz! Halol javob bering — "
             "natijalar tadqiqot maqsadida ishlatiladi.\n\n"
             "Jami savollar: *{total}*\n\n"
-            "Boshlash uchun *Start* tugmasini bosing."
+            "Boshlash uchun *Boshlash* tugmasini bosing."
         ),
         "btn_survey_start": "▶️ Boshlash",
-        "survey_question":  "❓ *Savol {n}/{total}:*\n\n{text}",
+        "survey_question":  "📌 *Savol {n} / {total}*\n\n{text}",
         "survey_done": (
-            "✅ *So'rov tugadi!*\n\n"
+            "🎉 *So'rov tugadi!*\n\n"
             "Ishtirok etganingiz uchun rahmat 🙏\n"
             "Javoblaringiz tadqiqotga yordam beradi."
         ),
@@ -199,12 +197,12 @@ TEXTS = {
         ),
 
         # ── portfolio
-        "portfolio_select_cat": "🖼 *Portfolio*\n\nKategoriyani tanlang:",
+        "portfolio_select_cat": "🗂 *Portfolio*\n\nKategoriyani tanlang:",
         "portfolio_empty_cat":  "📭 Bu kategoriyada hali ishlar yo'q.",
         "portfolio_item":       "*{title}*\n\n{desc}\n",
         "portfolio_demo":       "\n🔗 Demo: {url}",
         "portfolio_video":      "\n🎬 Video: {url}",
-        "portfolio_nav_btn":    "{cur}/{total}",
+        "portfolio_nav_btn":    "{cur} / {total}",
         "btn_port_prev":        "⬅️",
         "btn_port_next":        "➡️",
         "btn_port_cats":        "🗂 Kategoriyalar",
