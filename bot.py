@@ -18,13 +18,10 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-from config import BOT_TOKEN, ADMIN_ID, ADMIN_USERNAME, PORTFOLIO_DIR, SHEETS_ENABLED, CHANNEL_URL
+from config import BOT_TOKEN, ADMIN_ID, ADMIN_USERNAME, SHEETS_ENABLED, CHANNEL_URL
 from texts import TEXTS
-from datetime import datetime, timedelta
 from database import (
-    init_db, upsert_user, save_order, get_order,
-    set_order_status, all_user_ids, pending_orders, user_count,
-    get_user_orders,
+    init_db, upsert_user, all_user_ids, user_count,
     add_portfolio_item, get_portfolio_by_category,
     get_portfolio_item, get_all_portfolio, delete_portfolio_item,
 )
@@ -35,27 +32,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-if SHEETS_ENABLED:
-    import sheets as gsheets
-    logger.info("Google Sheets logging enabled")
-
 # ── Conversation states ───────────────────────────────────────────────────────
-(
-    LANG_SELECT,
-    MAIN_MENU,
-    ORDER_NAME,
-    ORDER_PHONE,
-    ORDER_SERVICE,
-    ORDER_NICHE,
-    ORDER_GOAL,
-    ORDER_BUDGET,
-    ORDER_CONFIRM,
-) = range(9)
-
+LANG_SELECT, MAIN_MENU = range(2)
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
 PORT_CAT, PORT_PHOTO, PORT_TITLE, PORT_DESC, PORT_LINK, PORT_VIDEO, PORT_CONFIRM, PORT_DEL = range(20, 28)
-
-FAQ_COUNT = 5
 
 PORTFOLIO_CATS = {
     "type_smm":      "smm",
@@ -81,22 +61,13 @@ def is_admin(user_id: int) -> bool:
 
 
 def _s(text) -> str:
-    """Strip markdown special chars from user-submitted text."""
     return str(text or "—").replace("*", "").replace("_", " ").replace("`", "").replace("[", "").replace("]", "")
 
 
 def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "btn_services"),    callback_data="services"),
             InlineKeyboardButton(t(lang, "btn_portfolio"),   callback_data="portfolio"),
-        ],
-        [
-            InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
-            InlineKeyboardButton(t(lang, "btn_order"),       callback_data="order"),
-        ],
-        [
-            InlineKeyboardButton(t(lang, "btn_myorders"),    callback_data="myorders"),
             InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
         ],
         [
@@ -106,30 +77,10 @@ def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
     ])
 
 
-def back_to_menu_keyboard(lang: str, include_order: bool = True) -> InlineKeyboardMarkup:
-    rows = []
-    if include_order:
-        rows.append([InlineKeyboardButton(t(lang, "btn_order"), callback_data="order")])
-    rows.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
-    return InlineKeyboardMarkup(rows)
-
-
-def _service_keyboard(lang: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "type_smm"),      callback_data="type_smm")],
-        [InlineKeyboardButton(t(lang, "type_branding"), callback_data="type_branding")],
-        [InlineKeyboardButton(t(lang, "type_both"),     callback_data="type_both")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
-    ])
-
-
-def _goal_keyboard(lang: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "goal_followers"), callback_data="goal_followers")],
-        [InlineKeyboardButton(t(lang, "goal_sales"),     callback_data="goal_sales")],
-        [InlineKeyboardButton(t(lang, "goal_awareness"), callback_data="goal_awareness")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),  callback_data="main_menu")],
-    ])
+def back_keyboard(lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
+    ]])
 
 
 # ── /start ────────────────────────────────────────────────────────────────────
@@ -170,18 +121,6 @@ async def show_main_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 
-async def show_services(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    await query.edit_message_text(
-        t(lang, "services_text"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=back_to_menu_keyboard(lang),
-    )
-    return MAIN_MENU
-
-
 async def show_contacts(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -190,7 +129,7 @@ async def show_contacts(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.edit_message_text(
         t(lang, "contacts_text", admin_username=safe_username),
         parse_mode=ParseMode.MARKDOWN,
-        reply_markup=back_to_menu_keyboard(lang),
+        reply_markup=back_keyboard(lang),
     )
     return MAIN_MENU
 
@@ -219,7 +158,6 @@ def _portfolio_item_keyboard(lang: str, cat: str, idx: int, total: int) -> Inlin
         nav_row.append(InlineKeyboardButton(t(lang, "btn_port_next"), callback_data=f"pcat_{cat}_{idx+1}"))
     return InlineKeyboardMarkup([
         nav_row,
-        [InlineKeyboardButton(t(lang, "btn_port_order"),  callback_data="order")],
         [
             InlineKeyboardButton(t(lang, "btn_port_cats"), callback_data="portfolio"),
             InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu"),
@@ -322,7 +260,7 @@ async def adm_port_got_cat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    ctx.user_data["new_port"]["category"] = query.data[4:]  # "apc_smm" → "smm"
+    ctx.user_data["new_port"]["category"] = query.data[4:]
     await query.edit_message_text(
         t(lang, "adm_port_step_photo"),
         parse_mode=ParseMode.MARKDOWN,
@@ -382,7 +320,7 @@ async def adm_port_skip_field(update: Update, ctx: ContextTypes.DEFAULT_TYPE) ->
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    field = query.data.split("_")[2]  # "port_skip_desc" → "desc"
+    field = query.data.split("_")[2]
     ctx.user_data["new_port"][field] = ""
 
     if field == "desc":
@@ -460,8 +398,8 @@ def _port_preview_text(ctx, lang: str) -> str:
 
 def _port_confirm_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton(t(lang, "btn_save"),    callback_data="port_save"),
-        InlineKeyboardButton(t(lang, "btn_del_no"),  callback_data="port_cancel"),
+        InlineKeyboardButton(t(lang, "btn_save"),   callback_data="port_save"),
+        InlineKeyboardButton(t(lang, "btn_del_no"), callback_data="port_cancel"),
     ]])
 
 
@@ -581,434 +519,6 @@ async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 
-# ── My orders ─────────────────────────────────────────────────────────────────
-
-async def _myorders_text(lang: str, user_id: int) -> tuple[str, InlineKeyboardMarkup]:
-    orders = get_user_orders(user_id)
-    nav = InlineKeyboardMarkup([[
-        InlineKeyboardButton(t(lang, "btn_order"),     callback_data="order"),
-        InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu"),
-    ]])
-    if not orders:
-        return t(lang, "myorders_empty"), nav
-    status_map = {
-        "pending":  t(lang, "status_pending"),
-        "done":     t(lang, "status_done"),
-        "rejected": t(lang, "status_rejected"),
-    }
-    lines = [t(lang, "myorders_header")]
-    for o in orders:
-        lines.append(t(lang, "myorders_row",
-            status=status_map.get(o["status"], "⏳"),
-            id=o["id"],
-            dtype=o["dtype"],
-            budget=o["budget"],
-            date=o["created_at"][:10],
-        ))
-    return "\n".join(lines), nav
-
-
-async def my_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    lang = get_lang(ctx)
-    text, nav = await _myorders_text(lang, update.effective_user.id)
-    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=nav)
-
-
-async def my_orders_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    text, nav = await _myorders_text(lang, query.from_user.id)
-    await query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=nav)
-    return MAIN_MENU
-
-
-# ── Reminder ──────────────────────────────────────────────────────────────────
-
-def _cancel_reminder(ctx: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
-    if not ctx.job_queue:
-        return
-    for job in ctx.job_queue.get_jobs_by_name(f"reminder_{user_id}"):
-        job.schedule_removal()
-
-
-async def _send_reminder(ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = ctx.job.data["user_id"]
-    lang    = ctx.job.data["lang"]
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton(t(lang, "btn_reminder_continue"), callback_data="reminder_continue"),
-        InlineKeyboardButton(t(lang, "btn_reminder_cancel"),   callback_data="reminder_cancel"),
-    ]])
-    try:
-        await ctx.bot.send_message(
-            chat_id=user_id,
-            text=t(lang, "reminder_text"),
-            reply_markup=keyboard,
-        )
-    except Exception as e:
-        logger.warning("Could not send reminder to %s: %s", user_id, e)
-
-
-async def reminder_continue(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_reply_markup(reply_markup=None)
-
-
-async def reminder_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["order"] = {}
-    _cancel_reminder(ctx, query.from_user.id)
-    await query.edit_message_text(
-        t(lang, "reminder_cancelled"),
-        reply_markup=main_menu_keyboard(lang),
-    )
-    return MAIN_MENU
-
-
-
-# ── FAQ ───────────────────────────────────────────────────────────────────────
-
-def _faq_list_keyboard(lang: str) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton(t(lang, f"faq_q{i}"), callback_data=f"faq_{i}")]
-        for i in range(1, FAQ_COUNT + 1)
-    ]
-    rows.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
-    return InlineKeyboardMarkup(rows)
-
-
-async def show_faq(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    await query.edit_message_text(
-        t(lang, "faq_menu"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_faq_list_keyboard(lang),
-    )
-    return MAIN_MENU
-
-
-async def show_faq_answer(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    n = query.data.split("_")[1]
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "btn_back_faq"), callback_data="faq")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
-    ])
-    await query.edit_message_text(
-        t(lang, f"faq_a{n}"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
-    )
-    return MAIN_MENU
-
-
-# ── Order flow ────────────────────────────────────────────────────────────────
-
-async def order_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["order"] = {}
-
-    user_id = query.from_user.id
-    _cancel_reminder(ctx, user_id)
-    if ctx.job_queue:
-        ctx.job_queue.run_once(
-            _send_reminder,
-            when=3600,
-            data={"user_id": user_id, "lang": lang},
-            name=f"reminder_{user_id}",
-        )
-
-    await query.edit_message_text(t(lang, "order_start"), parse_mode=ParseMode.MARKDOWN)
-    return ORDER_NAME
-
-
-async def order_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["name"] = update.message.text.strip()
-    await update.message.reply_text(t(lang, "order_phone"), parse_mode=ParseMode.MARKDOWN)
-    return ORDER_PHONE
-
-
-async def order_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["phone"] = update.message.text.strip()
-    await update.message.reply_text(
-        t(lang, "order_service"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_service_keyboard(lang),
-    )
-    return ORDER_SERVICE
-
-
-async def order_service(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["dtype"] = t(lang, query.data)  # e.g. "type_smm"
-    await query.edit_message_text(t(lang, "order_niche"), parse_mode=ParseMode.MARKDOWN)
-    return ORDER_NICHE
-
-
-async def order_niche(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["niche"] = update.message.text.strip()
-    await update.message.reply_text(
-        t(lang, "order_goal"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_goal_keyboard(lang),
-    )
-    return ORDER_GOAL
-
-
-async def order_goal(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["goal"] = t(lang, query.data)  # e.g. "goal_sales"
-    await query.edit_message_text(t(lang, "order_budget"), parse_mode=ParseMode.MARKDOWN)
-    return ORDER_BUDGET
-
-
-async def order_budget(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["order"]["budget"] = update.message.text.strip()
-    order = ctx.user_data["order"]
-    await update.message.reply_text(
-        t(lang, "order_confirm",
-          name=_s(order.get("name", "")),
-          phone=_s(order.get("phone", "")),
-          dtype=order.get("dtype", ""),
-          niche=_s(order.get("niche", "")),
-          goal=order.get("goal", ""),
-          budget=_s(order.get("budget", "")),
-        ),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="confirm_yes"),
-            InlineKeyboardButton(t(lang, "btn_cancel"),  callback_data="confirm_no"),
-        ]]),
-    )
-    return ORDER_CONFIRM
-
-
-async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    order = ctx.user_data.get("order", {})
-    user  = query.from_user
-
-    description = f"{order.get('niche', '')} | {order.get('goal', '')}"
-
-    order_id = save_order(
-        user_id=user.id,
-        username=user.username,
-        name=order.get("name", ""),
-        phone=order.get("phone", ""),
-        dtype=order.get("dtype", ""),
-        budget=order.get("budget", ""),
-        description=description,
-    )
-
-    if SHEETS_ENABLED:
-        gsheets.log_order(
-            order_id=order_id,
-            name=order.get("name", ""),
-            phone=order.get("phone", ""),
-            dtype=order.get("dtype", ""),
-            budget=order.get("budget", ""),
-            description=description,
-            user_id=user.id,
-            username=user.username,
-        )
-
-    admin_text = t("uz", "admin_order_notify",
-        order_id=order_id,
-        name=order.get("name", "—"),
-        phone=order.get("phone", "—"),
-        dtype=order.get("dtype", "—"),
-        niche=order.get("niche", "—"),
-        goal=order.get("goal", "—"),
-        budget=order.get("budget", "—"),
-        user_id=user.id,
-        username=user.username or "—",
-    )
-    try:
-        await ctx.bot.send_message(
-            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN
-        )
-    except Exception as e:
-        logger.error("Admin notification failed: %s", e)
-
-    if ctx.job_queue:
-        ctx.job_queue.run_once(
-            _remind_admin_order,
-            when=900,
-            data={"order_id": order_id, "order": dict(order)},
-            name=f"ord_remind_{order_id}",
-        )
-
-    await query.edit_message_text(
-        t(lang, "order_sent", admin_username=ADMIN_USERNAME.replace("_", "\\_")),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
-        ]]),
-    )
-    ctx.user_data["order"] = {}
-    _cancel_reminder(ctx, query.from_user.id)
-    return MAIN_MENU
-
-
-async def order_confirm_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["order"] = {}
-    _cancel_reminder(ctx, query.from_user.id)
-    await query.edit_message_text(
-        t(lang, "order_cancelled"), reply_markup=main_menu_keyboard(lang)
-    )
-    return MAIN_MENU
-
-
-# ── Admin order/consult reminder jobs ─────────────────────────────────────────
-
-async def _remind_admin_order(ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    data     = ctx.job.data
-    order_id = data["order_id"]
-    order    = data["order"]
-    text = t("uz", "admin_order_remind",
-        order_id=order_id,
-        name=order.get("name", "—"),
-        phone=order.get("phone", "—"),
-        dtype=order.get("dtype", "—"),
-        budget=order.get("budget", "—"),
-    )
-    try:
-        await ctx.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode=ParseMode.MARKDOWN)
-    except Exception as e:
-        logger.warning("Order remind failed: %s", e)
-
-
-async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    if not ctx.args:
-        await update.message.reply_text("Ishlatish: `/accept <order_id>`", parse_mode=ParseMode.MARKDOWN)
-        return
-    order_id = int(ctx.args[0])
-    if ctx.job_queue:
-        for job in ctx.job_queue.get_jobs_by_name(f"ord_remind_{order_id}"):
-            job.schedule_removal()
-    order = get_order(order_id)
-    if not order:
-        await update.message.reply_text(t("uz", "admin_accept_404", id=order_id))
-        return
-    await update.message.reply_text(t("uz", "admin_accepted", id=order_id))
-    try:
-        await ctx.bot.send_message(
-            chat_id=order["user_id"],
-            text=(
-                f"✅ Sizning buyurtmangiz *#{order_id}* menejer tomonidan qabul qilindi\\!\n"
-                f"Tez orada siz bilan bog'lanamiz\\."
-            ),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-    except Exception:
-        pass
-
-
-# ── Admin: /done /reject /orders ──────────────────────────────────────────────
-
-async def admin_done(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    if not ctx.args:
-        await update.message.reply_text("Ishlatish: `/done <order_id>`", parse_mode=ParseMode.MARKDOWN)
-        return
-    order_id = int(ctx.args[0])
-    order = get_order(order_id)
-    if not order:
-        await update.message.reply_text(f"Buyurtma #{order_id} topilmadi.")
-        return
-    set_order_status(order_id, "done")
-    if SHEETS_ENABLED:
-        gsheets.update_order_row(order_id, "done")
-    try:
-        await ctx.bot.send_message(
-            chat_id=order["user_id"],
-            text=(
-                f"✅ Sizning buyurtmangiz *\\#{order_id}* bajarildi\\!\n"
-                f"Ishonch uchun rahmat\\. Bog'lanish: @{ADMIN_USERNAME}"
-            ),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-    except Exception as e:
-        logger.warning("Could not notify user: %s", e)
-    await update.message.reply_text(f"✅ Buyurtma #{order_id} bajarildi.")
-
-
-async def admin_reject(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    if not ctx.args:
-        await update.message.reply_text("Ishlatish: `/reject <order_id> [sabab]`", parse_mode=ParseMode.MARKDOWN)
-        return
-    order_id = int(ctx.args[0])
-    reason   = " ".join(ctx.args[1:]) if len(ctx.args) > 1 else "Ko'rsatilmagan"
-    order = get_order(order_id)
-    if not order:
-        await update.message.reply_text(f"Buyurtma #{order_id} topilmadi.")
-        return
-    set_order_status(order_id, "rejected")
-    if SHEETS_ENABLED:
-        gsheets.update_order_row(order_id, "rejected")
-    esc = lambda s: s.replace(".", "\\.").replace("!", "\\!").replace("-", "\\-").replace("(", "\\(").replace(")", "\\)")
-    try:
-        await ctx.bot.send_message(
-            chat_id=order["user_id"],
-            text=(
-                f"❌ *\\#{order_id}* raqamli ariza bo'yicha rad etishga majburmiz\\.\n"
-                f"Sabab: {esc(reason)}\n\n"
-                f"Savollar bo'lsa — @{ADMIN_USERNAME}"
-            ),
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-    except Exception as e:
-        logger.warning("Could not notify user: %s", e)
-    await update.message.reply_text(f"❌ Buyurtma #{order_id} rad etildi.")
-
-
-async def admin_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    rows = pending_orders()
-    if not rows:
-        await update.message.reply_text("📋 Faol arizalar yo'q.")
-        return
-    lines = [f"📋 *Faol arizalar ({len(rows)}):*\n"]
-    for r in rows:
-        lines.append(
-            f"*#{r['id']}* — {_s(r['name'])} | {_s(r['dtype'])}\n"
-            f"📱 {_s(r['phone'])} | 💰 {_s(r['budget'])}\n"
-            f"🕐 {r['created_at'][:16]}\n"
-        )
-    try:
-        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
-    except Exception:
-        await update.message.reply_text("\n".join(lines))
-
-
 # ── Admin: /broadcast ─────────────────────────────────────────────────────────
 
 async def broadcast_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1065,7 +575,8 @@ async def broadcast_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def unknown_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     lang = get_lang(ctx)
-    await update.message.reply_text(t(lang, "main_menu"), reply_markup=main_menu_keyboard(lang))
+    await update.message.reply_text(t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+                                    parse_mode=ParseMode.MARKDOWN)
 
 
 # ── App setup ─────────────────────────────────────────────────────────────────
@@ -1101,57 +612,20 @@ def main() -> None:
             ],
             MAIN_MENU: [
                 CallbackQueryHandler(show_main_menu,       pattern="^main_menu$"),
-                CallbackQueryHandler(show_services,        pattern="^services$"),
                 CallbackQueryHandler(show_portfolio,       pattern="^portfolio$"),
                 CallbackQueryHandler(show_portfolio_items, pattern="^pcat_"),
                 CallbackQueryHandler(show_contacts,        pattern="^contacts$"),
-                CallbackQueryHandler(show_faq,             pattern="^faq$"),
-                CallbackQueryHandler(show_faq_answer,      pattern="^faq_[1-5]$"),
-                CallbackQueryHandler(order_start,          pattern="^order$"),
                 CallbackQueryHandler(switch_lang,          pattern="^switch_lang$"),
-                CallbackQueryHandler(my_orders_callback,   pattern="^myorders$"),
                 CallbackQueryHandler(lambda u, c: u.callback_query.answer(), pattern="^noop$"),
-            ],
-            ORDER_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, order_name),
-            ],
-            ORDER_PHONE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, order_phone),
-            ],
-            ORDER_SERVICE: [
-                CallbackQueryHandler(order_service,    pattern="^type_"),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
-            ],
-            ORDER_NICHE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, order_niche),
-            ],
-            ORDER_GOAL: [
-                CallbackQueryHandler(order_goal,       pattern="^goal_"),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
-            ],
-            ORDER_BUDGET: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, order_budget),
-            ],
-            ORDER_CONFIRM: [
-                CallbackQueryHandler(order_confirm_yes, pattern="^confirm_yes$"),
-                CallbackQueryHandler(order_confirm_no,  pattern="^confirm_no$"),
             ],
         },
         fallbacks=[
             CommandHandler("start", start),
-            CallbackQueryHandler(reminder_cancel,   pattern="^reminder_cancel$"),
-            CallbackQueryHandler(reminder_continue, pattern="^reminder_continue$"),
             MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
         ],
         per_message=False,
         allow_reentry=True,
     )
-
-    app.add_handler(CommandHandler("done",    admin_done))
-    app.add_handler(CommandHandler("reject",  admin_reject))
-    app.add_handler(CommandHandler("orders",  admin_orders))
-    app.add_handler(CommandHandler("accept",  admin_accept_order))
-    app.add_handler(CommandHandler("myorders", my_orders))
 
     add_port_conv = ConversationHandler(
         entry_points=[CommandHandler("addportfolio", adm_port_add_start)],
@@ -1200,7 +674,7 @@ def main() -> None:
     app.add_handler(del_port_conv)
     app.add_handler(user_conv)
 
-    logger.info("Markenti bot started. Sheets: %s", "enabled" if SHEETS_ENABLED else "disabled")
+    logger.info("Markenti bot started.")
     asyncio.run(_run(app))
 
 
