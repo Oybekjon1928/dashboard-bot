@@ -128,7 +128,7 @@ TEXTS = {
         # ── welcome
         "welcome": (
             "👋 Xush kelibsiz!\n\n"
-            "Men — iste'molchi xulqi va brend strategiyasi bo'yicha mutaxassisман.\n\n"
+            "Men — Consumer Behaviour va Brand Strategy mutaxassisi.\n\n"
             "Bu yerda mening portfoliom, tadqiqot so'rovlari\n"
             "va men bilan bog'lanish imkoniyati mavjud.\n\n"
             "Bo'limni tanlang 👇"
@@ -146,7 +146,7 @@ TEXTS = {
         # ── about me
         "about_text": (
             "🙋 *Men haqimda*\n\n"
-            "Iste'molchi xulqi va brend strategiyasi bo'yicha mutaxassis.\n\n"
+            "Consumer Behaviour va Brand Strategy mutaxassisi.\n\n"
             "Brendlarga o'z auditoriyasini tushunishga va konversiyaga aylantiruvchi "
             "strategiyalar yaratishga yordam beraman. Frilanser loyihalar va doimiy "
             "hamkorlikka tayyorman.\n\n"
