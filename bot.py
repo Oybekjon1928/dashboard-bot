@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from database import (
     init_db, upsert_user, save_order, get_order,
     set_order_status, all_user_ids, pending_orders, user_count,
-    get_user_orders, save_consultation, all_consultations, get_booked_times,
+    get_user_orders,
     add_portfolio_item, get_portfolio_by_category,
     get_portfolio_item, get_all_portfolio, delete_portfolio_item,
 )
@@ -53,7 +53,6 @@ if SHEETS_ENABLED:
 ) = range(9)
 
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
-CONSULT_TIME, CONSULT_PHONE = range(12, 14)
 PORT_CAT, PORT_PHOTO, PORT_TITLE, PORT_DESC, PORT_LINK, PORT_VIDEO, PORT_CONFIRM, PORT_DEL = range(20, 28)
 
 FAQ_COUNT = 5
@@ -94,17 +93,14 @@ def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
-            InlineKeyboardButton(t(lang, "btn_consult"),     callback_data="consult"),
-        ],
-        [
             InlineKeyboardButton(t(lang, "btn_order"),       callback_data="order"),
+        ],
+        [
             InlineKeyboardButton(t(lang, "btn_myorders"),    callback_data="myorders"),
-        ],
-        [
             InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
-            InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
         ],
         [
+            InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
             InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
         ],
     ])
@@ -672,176 +668,6 @@ async def reminder_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     return MAIN_MENU
 
 
-# ── Free consultation ─────────────────────────────────────────────────────────
-
-_CONSULT_TIMES = ["09:00", "11:00", "13:00", "15:00", "17:00"]
-_TIME_CB = {"09:00": "9", "11:00": "11", "13:00": "13", "15:00": "15", "17:00": "17"}
-
-
-def _day_label(lang: str, day_index: int) -> str:
-    date = datetime.now() + timedelta(days=day_index)
-    name = t(lang, f"consult_day_{day_index}")
-    return f"{name} ({date.strftime('%d-%b')})"
-
-
-def _day_date_str(day_index: int) -> str:
-    return (datetime.now() + timedelta(days=day_index)).strftime("%Y-%m-%d")
-
-
-def _time_keyboard(lang: str, date_str: str) -> InlineKeyboardMarkup:
-    booked = get_booked_times(date_str)
-    rows, row = [], []
-    for slot in _CONSULT_TIMES:
-        if slot in booked:
-            row.append(InlineKeyboardButton(f"❌ {slot}", callback_data="ctime_booked"))
-        else:
-            row.append(InlineKeyboardButton(f"✅ {slot}", callback_data=f"ctime_{_TIME_CB[slot]}"))
-        if len(row) == 3:
-            rows.append(row)
-            row = []
-    if row:
-        rows.append(row)
-    rows.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
-    return InlineKeyboardMarkup(rows)
-
-
-async def consult_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["consult"] = {}
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(_day_label(lang, 0), callback_data="cday_0"),
-            InlineKeyboardButton(_day_label(lang, 1), callback_data="cday_1"),
-        ],
-        [
-            InlineKeyboardButton(_day_label(lang, 2), callback_data="cday_2"),
-        ],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
-    ])
-    await query.edit_message_text(
-        t(lang, "consult_step1"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
-    )
-    return CONSULT_TIME
-
-
-async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    day_index = int(query.data.split("_")[1])
-    date_str  = _day_date_str(day_index)
-    ctx.user_data["consult"]["day"]      = _day_label(lang, day_index)
-    ctx.user_data["consult"]["date_str"] = date_str
-
-    booked_count = len(get_booked_times(date_str))
-    if booked_count == len(_CONSULT_TIMES):
-        await query.edit_message_text(
-            t(lang, "all_slots_booked"),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
-            ]]),
-        )
-        return CONSULT_TIME
-
-    await query.edit_message_text(
-        t(lang, "consult_step2"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_time_keyboard(lang, date_str),
-    )
-    return CONSULT_PHONE
-
-
-async def consult_booked_slot(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    lang  = get_lang(ctx)
-    await query.answer(t(lang, "booked_slot_alert"), show_alert=True)
-    return CONSULT_PHONE
-
-
-async def consult_got_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    date_str = ctx.user_data.get("consult", {}).get("date_str", "")
-    time_key = query.data.split("_")[1]
-    slot     = {"9": "09:00", "11": "11:00", "13": "13:00", "15": "15:00", "17": "17:00"}.get(time_key, "")
-
-    if slot in get_booked_times(date_str):
-        await query.answer(t(lang, "booked_slot_alert"), show_alert=True)
-        await query.edit_message_reply_markup(reply_markup=_time_keyboard(lang, date_str))
-        return CONSULT_PHONE
-
-    ctx.user_data["consult"]["time"] = slot
-    await query.edit_message_text(
-        t(lang, "consult_step3"),
-        parse_mode=ParseMode.MARKDOWN,
-    )
-    return CONSULT_PHONE
-
-
-async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    phone = update.message.text.strip()
-    consult = ctx.user_data.get("consult", {})
-    user = update.effective_user
-
-    consult_id = save_consultation(
-        user_id=user.id,
-        username=user.username,
-        first_name=user.first_name,
-        phone=phone,
-        day=consult.get("date_str", consult.get("day", "—")),
-        time=consult.get("time", "—"),
-    )
-
-    admin_text = t("uz", "admin_consult_notify",
-        consult_id=consult_id,
-        name=user.first_name or "—",
-        username=user.username or "—",
-        phone=phone,
-        day=consult.get("day", "—"),
-        time=consult.get("time", "—"),
-        user_id=user.id,
-    )
-    try:
-        await update.message.bot.send_message(
-            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN
-        )
-    except Exception as e:
-        logger.error("Consult admin notify failed: %s", e)
-
-    if ctx.job_queue:
-        ctx.job_queue.run_once(
-            _remind_admin_consult,
-            when=900,
-            data={
-                "consult_id": consult_id,
-                "name": user.first_name or "—",
-                "phone": phone,
-                "day": consult.get("day", "—"),
-                "time": consult.get("time", "—"),
-            },
-            name=f"con_remind_{consult_id}",
-        )
-
-    await update.message.reply_text(
-        t(lang, "consult_confirm",
-          day=consult.get("day", "—"),
-          time=consult.get("time", "—"),
-          phone=phone,
-          admin_username=ADMIN_USERNAME.replace("_", "\\\_")),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
-        ]]),
-    )
-    ctx.user_data["consult"] = {}
-    return MAIN_MENU
-
 
 # ── FAQ ───────────────────────────────────────────────────────────────────────
 
@@ -1074,21 +900,6 @@ async def _remind_admin_order(ctx: ContextTypes.DEFAULT_TYPE) -> None:
         logger.warning("Order remind failed: %s", e)
 
 
-async def _remind_admin_consult(ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    data = ctx.job.data
-    text = t("uz", "admin_consult_remind",
-        consult_id=data["consult_id"],
-        name=data["name"],
-        phone=data["phone"],
-        day=data["day"],
-        time=data["time"],
-    )
-    try:
-        await ctx.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode=ParseMode.MARKDOWN)
-    except Exception as e:
-        logger.warning("Consult remind failed: %s", e)
-
-
 async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         return
@@ -1115,19 +926,6 @@ async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
         )
     except Exception:
         pass
-
-
-async def admin_accept_consult(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    if not ctx.args:
-        await update.message.reply_text("Ishlatish: `/acceptc <consult_id>`", parse_mode=ParseMode.MARKDOWN)
-        return
-    consult_id = int(ctx.args[0])
-    if ctx.job_queue:
-        for job in ctx.job_queue.get_jobs_by_name(f"con_remind_{consult_id}"):
-            job.schedule_removal()
-    await update.message.reply_text(f"✅ Konsultatsiya #{consult_id} qabul qilindi.")
 
 
 # ── Admin: /done /reject /orders ──────────────────────────────────────────────
@@ -1204,27 +1002,6 @@ async def admin_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             f"*#{r['id']}* — {_s(r['name'])} | {_s(r['dtype'])}\n"
             f"📱 {_s(r['phone'])} | 💰 {_s(r['budget'])}\n"
             f"🕐 {r['created_at'][:16]}\n"
-        )
-    try:
-        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
-    except Exception:
-        await update.message.reply_text("\n".join(lines))
-
-
-async def admin_consultations(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_admin(update.effective_user.id):
-        return
-    rows = all_consultations()
-    if not rows:
-        await update.message.reply_text("📅 Hali konsultatsiya so'rovlari yo'q.")
-        return
-    lines = [f"📅 *Barcha konsultatsiyalar ({len(rows)}):*\n"]
-    for r in rows:
-        lines.append(
-            f"*#{r['id']}* — {_s(r['first_name'])} (@{r['username'] or '—'})\n"
-            f"📱 {_s(r['phone'])}\n"
-            f"📅 {r['day']} | 🕐 {r['time']}\n"
-            f"🗓 {r['created_at'][:16]}\n"
         )
     try:
         await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
@@ -1331,7 +1108,6 @@ def main() -> None:
                 CallbackQueryHandler(show_faq,             pattern="^faq$"),
                 CallbackQueryHandler(show_faq_answer,      pattern="^faq_[1-5]$"),
                 CallbackQueryHandler(order_start,          pattern="^order$"),
-                CallbackQueryHandler(consult_start,        pattern="^consult$"),
                 CallbackQueryHandler(switch_lang,          pattern="^switch_lang$"),
                 CallbackQueryHandler(my_orders_callback,   pattern="^myorders$"),
                 CallbackQueryHandler(lambda u, c: u.callback_query.answer(), pattern="^noop$"),
@@ -1360,16 +1136,6 @@ def main() -> None:
                 CallbackQueryHandler(order_confirm_yes, pattern="^confirm_yes$"),
                 CallbackQueryHandler(order_confirm_no,  pattern="^confirm_no$"),
             ],
-            CONSULT_TIME: [
-                CallbackQueryHandler(consult_got_day,  pattern="^cday_"),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
-            ],
-            CONSULT_PHONE: [
-                CallbackQueryHandler(consult_booked_slot, pattern="^ctime_booked$"),
-                CallbackQueryHandler(consult_got_time,    pattern="^ctime_"),
-                MessageHandler(filters.TEXT & ~filters.COMMAND, consult_got_phone),
-                CallbackQueryHandler(show_main_menu,      pattern="^main_menu$"),
-            ],
         },
         fallbacks=[
             CommandHandler("start", start),
@@ -1381,13 +1147,11 @@ def main() -> None:
         allow_reentry=True,
     )
 
-    app.add_handler(CommandHandler("done",          admin_done))
-    app.add_handler(CommandHandler("reject",        admin_reject))
-    app.add_handler(CommandHandler("orders",        admin_orders))
-    app.add_handler(CommandHandler("consultations", admin_consultations))
-    app.add_handler(CommandHandler("accept",        admin_accept_order))
-    app.add_handler(CommandHandler("acceptc",       admin_accept_consult))
-    app.add_handler(CommandHandler("myorders",      my_orders))
+    app.add_handler(CommandHandler("done",    admin_done))
+    app.add_handler(CommandHandler("reject",  admin_reject))
+    app.add_handler(CommandHandler("orders",  admin_orders))
+    app.add_handler(CommandHandler("accept",  admin_accept_order))
+    app.add_handler(CommandHandler("myorders", my_orders))
 
     add_port_conv = ConversationHandler(
         entry_points=[CommandHandler("addportfolio", adm_port_add_start)],

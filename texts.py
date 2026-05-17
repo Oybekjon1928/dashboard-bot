@@ -123,20 +123,6 @@ TEXTS = {
             "✅ Qabul: `/accept {order_id}`\n"
             "❌ Rad: `/reject {order_id} sabab`"
         ),
-        "admin_consult_notify": (
-            "📅 *Yangi konsultatsiya #{consult_id}!*\n\n"
-            "👤 {name} (@{username})\n"
-            "📱 {phone}\n"
-            "📅 {day} | 🕐 {time}\n\n"
-            "🆔 ID: `{user_id}`\n\n"
-            "✅ Qabul: `/acceptc {consult_id}`"
-        ),
-        "admin_consult_remind": (
-            "⏰ *15 daqiqa o'tdi! #{consult_id} konsultatsiyaga javob berilmadi!*\n\n"
-            "👤 {name} | 📱 {phone}\n"
-            "📅 {day} | 🕐 {time}\n\n"
-            "✅ Qabul: `/acceptc {consult_id}`"
-        ),
         "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
         "admin_accept_404": "❌ #{id} topilmadi.",
 
@@ -201,7 +187,7 @@ TEXTS = {
         "btn_back_faq": "⬅️ К списку вопросов",
 
         # ── portfolio (user)
-        "portfolio_select_cat":  "🖼 *Портфолио*\n\nВыберите категорию:",
+        "portfolio_select_cat": "🖼 *Портфолио*\n\nВыберите категорию:",
         "portfolio_empty_cat":   "📭 В этой категории пока нет работ.",
         "portfolio_item": (
             "*{title}*\n\n"
@@ -271,37 +257,6 @@ TEXTS = {
         "btn_reminder_continue": "▶️ Продолжить",
         "btn_reminder_cancel":   "❌ Отменить заявку",
         "reminder_cancelled":    "Заявка отменена. Возвращаю в меню.",
-
-        # ── free consultation
-        "btn_consult":   "📅 Бесплатная консультация",
-        "consult_step1": "📅 *Бесплатная консультация*\n\nВыберите удобный день:",
-        "consult_step2": "🕐 Выберите удобное время:",
-        "consult_step3": "📱 Введите ваш *номер телефона* для подтверждения:",
-        "consult_confirm": (
-            "✅ *Консультация забронирована!*\n\n"
-            "📅 День: {day}\n"
-            "🕐 Время: {time}\n\n"
-            "Мы свяжемся с вами по номеру {phone} для подтверждения.\n"
-            "По вопросам: @{admin_username}"
-        ),
-        "admin_consult": (
-            "📅 *Запрос на консультацию!*\n\n"
-            "👤 {name} (@{username})\n"
-            "📱 Телефон: {phone}\n"
-            "📅 День: {day}\n"
-            "🕐 Время: {time}\n\n"
-            "🆔 ID: `{user_id}`"
-        ),
-        "consult_day_0":    "Bugun",
-        "consult_day_1":    "Ertaga",
-        "consult_day_2":    "Indiniga",
-        "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
-        "all_slots_booked": "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
-        "consult_t_9":  "09:00",
-        "consult_t_11": "11:00",
-        "consult_t_13": "13:00",
-        "consult_t_15": "15:00",
-        "consult_t_17": "17:00",
     },
 
     "uz": {
@@ -427,20 +382,6 @@ TEXTS = {
             "🎯 {dtype} | 💰 {budget}\n\n"
             "✅ Qabul: `/accept {order_id}`\n"
             "❌ Rad: `/reject {order_id} sabab`"
-        ),
-        "admin_consult_notify": (
-            "📅 *Yangi konsultatsiya #{consult_id}!*\n\n"
-            "👤 {name} (@{username})\n"
-            "📱 {phone}\n"
-            "📅 {day} | 🕐 {time}\n\n"
-            "🆔 ID: `{user_id}`\n\n"
-            "✅ Qabul: `/acceptc {consult_id}`"
-        ),
-        "admin_consult_remind": (
-            "⏰ *15 daqiqa o'tdi! #{consult_id} konsultatsiyaga javob berilmadi!*\n\n"
-            "👤 {name} | 📱 {phone}\n"
-            "📅 {day} | 🕐 {time}\n\n"
-            "✅ Qabul: `/acceptc {consult_id}`"
         ),
         "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
         "admin_accept_404": "❌ #{id} topilmadi.",
@@ -576,36 +517,5 @@ TEXTS = {
         "btn_reminder_continue": "▶️ Davom etish",
         "btn_reminder_cancel":   "❌ Arizani bekor qilish",
         "reminder_cancelled":    "Ariza bekor qilindi. Menyuga qaytaraman.",
-
-        # ── free consultation
-        "btn_consult":   "📅 Bepul konsultatsiya",
-        "consult_step1": "📅 *Bepul konsultatsiya*\n\nQulay kunni tanlang:",
-        "consult_step2": "🕐 Qulay vaqtni tanlang:",
-        "consult_step3": "📱 Tasdiqlash uchun *telefon raqamingizni* kiriting:",
-        "consult_confirm": (
-            "✅ *Konsultatsiya band qilindi!*\n\n"
-            "📅 Kun: {day}\n"
-            "🕐 Vaqt: {time}\n\n"
-            "Siz bilan {phone} raqami orqali bog'lanamiz.\n"
-            "Savollar uchun: @{admin_username}"
-        ),
-        "admin_consult": (
-            "📅 *Konsultatsiya so'rovi!*\n\n"
-            "👤 {name} (@{username})\n"
-            "📱 Telefon: {phone}\n"
-            "📅 Kun: {day}\n"
-            "🕐 Vaqt: {time}\n\n"
-            "🆔 ID: `{user_id}`"
-        ),
-        "consult_day_0":     "Bugun",
-        "consult_day_1":     "Ertaga",
-        "consult_day_2":     "Indiniga",
-        "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
-        "all_slots_booked":  "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
-        "consult_t_9":  "09:00",
-        "consult_t_11": "11:00",
-        "consult_t_13": "13:00",
-        "consult_t_15": "15:00",
-        "consult_t_17": "17:00",
     },
 }
