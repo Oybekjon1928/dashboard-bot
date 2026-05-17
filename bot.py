@@ -24,6 +24,11 @@ from database import (
     init_db, upsert_user, all_user_ids, user_count,
     add_portfolio_item, get_portfolio_by_category,
     get_portfolio_item, get_all_portfolio, delete_portfolio_item,
+    create_survey, add_survey_question, get_active_surveys, get_all_surveys,
+    get_survey, get_survey_questions, toggle_survey, delete_survey,
+    start_response, save_answer, get_survey_response_count,
+    get_survey_responses, get_response_answers,
+    save_contact,
 )
 
 logging.basicConfig(
@@ -34,13 +39,16 @@ logger = logging.getLogger(__name__)
 
 # ── Conversation states ───────────────────────────────────────────────────────
 LANG_SELECT, MAIN_MENU = range(2)
+CONTACT_MSG   = 5
+SURVEY_TAKING = 6
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
+ADM_SURV_TITLE, ADM_SURV_QUESTIONS, ADM_SURV_CONFIRM = range(15, 18)
 PORT_CAT, PORT_PHOTO, PORT_TITLE, PORT_DESC, PORT_LINK, PORT_VIDEO, PORT_CONFIRM, PORT_DEL = range(20, 28)
 
 PORTFOLIO_CATS = {
-    "type_smm":      "smm",
-    "type_branding": "branding",
-    "type_ads":      "ads",
+    "type_brand_strategy": "brand_strategy",
+    "type_consumer_beh":   "consumer_beh",
+    "type_smm_content":    "smm_content",
 }
 PORTFOLIO_CAT_KEYS = {v: k for k, v in PORTFOLIO_CATS.items()}
 
@@ -67,8 +75,12 @@ def _s(text) -> str:
 def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "btn_portfolio"),   callback_data="portfolio"),
-            InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
+            InlineKeyboardButton(t(lang, "btn_portfolio"), callback_data="portfolio"),
+            InlineKeyboardButton(t(lang, "btn_surveys"),   callback_data="surveys"),
+        ],
+        [
+            InlineKeyboardButton(t(lang, "btn_about"),   callback_data="about"),
+            InlineKeyboardButton(t(lang, "btn_contact"), callback_data="contact"),
         ],
         [
             InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
@@ -108,7 +120,7 @@ async def lang_selected(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 
-# ── Main menu handlers ────────────────────────────────────────────────────────
+# ── Main menu ─────────────────────────────────────────────────────────────────
 
 async def show_main_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -121,17 +133,197 @@ async def show_main_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 
-async def show_contacts(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+async def show_about(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    safe_username = ADMIN_USERNAME.replace("_", "\\_")
     await query.edit_message_text(
-        t(lang, "contacts_text", admin_username=safe_username),
+        t(lang, "about_text"),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=back_keyboard(lang),
     )
     return MAIN_MENU
+
+
+# ── Contact ───────────────────────────────────────────────────────────────────
+
+async def contact_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    await query.edit_message_text(
+        t(lang, "contact_prompt"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=back_keyboard(lang),
+    )
+    return CONTACT_MSG
+
+
+async def contact_got_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    lang = get_lang(ctx)
+    user = update.effective_user
+    message = update.message.text.strip()
+
+    save_contact(user.id, user.username, user.first_name, message)
+
+    safe_username = (user.username or "—").replace("_", "\\_")
+    admin_text = t("uz", "admin_contact_notify",
+        name=_s(user.first_name or "—"),
+        username=safe_username,
+        user_id=user.id,
+        message=_s(message),
+    )
+    try:
+        await ctx.bot.send_message(
+            chat_id=ADMIN_ID, text=admin_text, parse_mode=ParseMode.MARKDOWN
+        )
+    except Exception as e:
+        logger.error("Contact notify failed: %s", e)
+
+    await update.message.reply_text(
+        t(lang, "contact_sent"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=back_keyboard(lang),
+    )
+    return MAIN_MENU
+
+
+# ── Surveys (user) ────────────────────────────────────────────────────────────
+
+async def show_surveys(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+
+    surveys = get_active_surveys()
+    if not surveys:
+        await query.edit_message_text(
+            t(lang, "surveys_empty"),
+            reply_markup=back_keyboard(lang),
+        )
+        return MAIN_MENU
+
+    buttons = [
+        [InlineKeyboardButton(s["title"], callback_data=f"survey_{s['id']}")]
+        for s in surveys
+    ]
+    buttons.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
+
+    await query.edit_message_text(
+        t(lang, "surveys_title"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+    return MAIN_MENU
+
+
+async def survey_selected(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+
+    survey_id = int(query.data.split("_")[1])
+    survey = get_survey(survey_id)
+    questions = get_survey_questions(survey_id)
+
+    if not survey or not questions:
+        await query.edit_message_text("❌ Survey not found.", reply_markup=back_keyboard(lang))
+        return MAIN_MENU
+
+    ctx.user_data["survey"] = {
+        "id":          survey_id,
+        "title":       survey["title"],
+        "questions":   [dict(q) for q in questions],
+        "current":     0,
+        "response_id": None,
+    }
+
+    await query.edit_message_text(
+        t(lang, "survey_intro", title=survey["title"], total=len(questions)),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(t(lang, "btn_survey_start"), callback_data="survey_begin"),
+            InlineKeyboardButton(t(lang, "btn_main_menu"),    callback_data="main_menu"),
+        ]]),
+    )
+    return SURVEY_TAKING
+
+
+async def survey_begin(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    user = query.from_user
+
+    sd = ctx.user_data.get("survey", {})
+    response_id = start_response(sd["id"], user.id, user.username, user.first_name)
+    ctx.user_data["survey"]["response_id"] = response_id
+
+    q = sd["questions"][0]
+    total = len(sd["questions"])
+    await query.edit_message_text(
+        t(lang, "survey_question", n=1, total=total, text=q["text"]),
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return SURVEY_TAKING
+
+
+async def survey_got_answer(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    lang = get_lang(ctx)
+    user = update.effective_user
+    sd   = ctx.user_data.get("survey", {})
+
+    questions   = sd.get("questions", [])
+    current     = sd.get("current", 0)
+    response_id = sd.get("response_id")
+
+    if not response_id:
+        await update.message.reply_text(t(lang, "surveys_empty"), reply_markup=back_keyboard(lang))
+        return MAIN_MENU
+
+    save_answer(response_id, questions[current]["id"], update.message.text.strip())
+    current += 1
+    ctx.user_data["survey"]["current"] = current
+
+    if current >= len(questions):
+        # survey complete
+        survey_id = sd["id"]
+        survey_title = sd["title"]
+        ctx.user_data["survey"] = {}
+
+        await update.message.reply_text(
+            t(lang, "survey_done"),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=back_keyboard(lang),
+        )
+
+        from database import now_tashkent
+        safe_username = (user.username or "—").replace("_", "\\_")
+        try:
+            await ctx.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=t("uz", "admin_survey_notify",
+                    title=_s(survey_title),
+                    name=_s(user.first_name or "—"),
+                    username=safe_username,
+                    user_id=user.id,
+                    time=now_tashkent(),
+                ),
+                parse_mode=ParseMode.MARKDOWN,
+            )
+        except Exception as e:
+            logger.warning("Survey notify failed: %s", e)
+
+        return MAIN_MENU
+
+    # next question
+    q = questions[current]
+    total = len(questions)
+    await update.message.reply_text(
+        t(lang, "survey_question", n=current+1, total=total, text=q["text"]),
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return SURVEY_TAKING
 
 
 # ── Portfolio ─────────────────────────────────────────────────────────────────
@@ -139,23 +331,29 @@ async def show_contacts(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 def _portfolio_cat_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "type_smm"),      callback_data="pcat_smm_0"),
-            InlineKeyboardButton(t(lang, "type_branding"), callback_data="pcat_branding_0"),
+            InlineKeyboardButton(t(lang, "type_brand_strategy"), callback_data="pcat_brand_strategy_0"),
+            InlineKeyboardButton(t(lang, "type_consumer_beh"),   callback_data="pcat_consumer_beh_0"),
         ],
         [
-            InlineKeyboardButton(t(lang, "type_ads"),      callback_data="pcat_ads_0"),
+            InlineKeyboardButton(t(lang, "type_smm_content"),    callback_data="pcat_smm_content_0"),
         ],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),    callback_data="main_menu")],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"),          callback_data="main_menu")],
     ])
 
 
 def _portfolio_item_keyboard(lang: str, cat: str, idx: int, total: int) -> InlineKeyboardMarkup:
     nav_row = []
     if idx > 0:
-        nav_row.append(InlineKeyboardButton(t(lang, "btn_port_prev"), callback_data=f"pcat_{cat}_{idx-1}"))
-    nav_row.append(InlineKeyboardButton(t(lang, "portfolio_nav_btn", cur=idx+1, total=total), callback_data="noop"))
+        nav_row.append(InlineKeyboardButton(
+            t(lang, "btn_port_prev"), callback_data=f"pcat_{cat}_{idx-1}"
+        ))
+    nav_row.append(InlineKeyboardButton(
+        t(lang, "portfolio_nav_btn", cur=idx+1, total=total), callback_data="noop"
+    ))
     if idx < total - 1:
-        nav_row.append(InlineKeyboardButton(t(lang, "btn_port_next"), callback_data=f"pcat_{cat}_{idx+1}"))
+        nav_row.append(InlineKeyboardButton(
+            t(lang, "btn_port_next"), callback_data=f"pcat_{cat}_{idx+1}"
+        ))
     return InlineKeyboardMarkup([
         nav_row,
         [
@@ -182,9 +380,10 @@ async def show_portfolio_items(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
     await query.answer()
     lang = get_lang(ctx)
 
-    parts = query.data.split("_")
-    cat   = parts[1]
-    idx   = int(parts[2])
+    # callback: "pcat_brand_strategy_0" → split from right to get idx
+    data  = query.data  # "pcat_brand_strategy_0"
+    idx   = int(data.rsplit("_", 1)[1])
+    cat   = data[5:].rsplit("_", 1)[0]   # strip "pcat_" prefix, strip "_<idx>" suffix
 
     items = get_portfolio_by_category(cat)
     nav = InlineKeyboardMarkup([[
@@ -232,6 +431,21 @@ async def show_portfolio_items(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
     return MAIN_MENU
 
 
+# ── Language switch ───────────────────────────────────────────────────────────
+
+async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = "uz" if get_lang(ctx) == "ru" else "ru"
+    ctx.user_data["lang"] = lang
+    upsert_user(query.from_user.id, query.from_user.username, lang)
+    await query.edit_message_text(
+        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return MAIN_MENU
+
+
 # ── Admin: portfolio management ───────────────────────────────────────────────
 
 async def adm_port_add_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
@@ -241,11 +455,11 @@ async def adm_port_add_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
     ctx.user_data["new_port"] = {}
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "type_smm"),      callback_data="apc_smm"),
-            InlineKeyboardButton(t(lang, "type_branding"), callback_data="apc_branding"),
+            InlineKeyboardButton(t(lang, "type_brand_strategy"), callback_data="apc_brand_strategy"),
+            InlineKeyboardButton(t(lang, "type_consumer_beh"),   callback_data="apc_consumer_beh"),
         ],
         [
-            InlineKeyboardButton(t(lang, "type_ads"),      callback_data="apc_ads"),
+            InlineKeyboardButton(t(lang, "type_smm_content"),    callback_data="apc_smm_content"),
         ],
     ])
     await update.message.reply_text(
@@ -260,7 +474,7 @@ async def adm_port_got_cat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    ctx.user_data["new_port"]["category"] = query.data[4:]
+    ctx.user_data["new_port"]["category"] = query.data[4:]  # strip "apc_"
     await query.edit_message_text(
         t(lang, "adm_port_step_photo"),
         parse_mode=ParseMode.MARKDOWN,
@@ -273,10 +487,9 @@ async def adm_port_got_cat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
 
 async def adm_port_got_photo(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
-    if update.message.photo:
-        ctx.user_data["new_port"]["file_id"] = update.message.photo[-1].file_id
-    else:
-        ctx.user_data["new_port"]["file_id"] = ""
+    ctx.user_data["new_port"]["file_id"] = (
+        update.message.photo[-1].file_id if update.message.photo else ""
+    )
     await update.message.reply_text(t(lang, "adm_port_step_title"), parse_mode=ParseMode.MARKDOWN)
     return PORT_TITLE
 
@@ -385,7 +598,7 @@ async def _adm_port_show_preview(query, ctx, lang: str) -> int:
 
 def _port_preview_text(ctx, lang: str) -> str:
     p = ctx.user_data.get("new_port", {})
-    cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(p.get("category", ""), "type_smm"))
+    cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(p.get("category", ""), "type_brand_strategy"))
     return t(lang, "adm_port_preview",
         cat=cat_label,
         title=p.get("title", "—"),
@@ -409,7 +622,7 @@ async def adm_port_save(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     p = ctx.user_data.get("new_port", {})
     add_portfolio_item(
-        category=p.get("category", "smm"),
+        category=p.get("category", "brand_strategy"),
         title=p.get("title", ""),
         description=p.get("description", ""),
         file_id=p.get("file_id", ""),
@@ -443,16 +656,17 @@ async def adm_port_delete_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) 
 
     lines = [t(lang, "adm_port_list_title")]
     for item in items:
-        cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(item["category"], "type_smm"))
+        cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(item["category"], "type_brand_strategy"))
         lines.append(t(lang, "adm_port_list_row",
             id=item["id"], cat=cat_label, title=item["title"]))
 
-    buttons = []
-    for item in items:
-        buttons.append([InlineKeyboardButton(
+    buttons = [
+        [InlineKeyboardButton(
             f"🗑 #{item['id']} — {item['title'][:30]}",
             callback_data=f"pdel_{item['id']}",
-        )])
+        )]
+        for item in items
+    ]
     buttons.append([InlineKeyboardButton("❌ Yopish", callback_data="pdel_cancel")])
 
     await update.message.reply_text(
@@ -504,19 +718,170 @@ async def adm_port_del_confirm(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
     return ConversationHandler.END
 
 
-# ── Language switch ───────────────────────────────────────────────────────────
+# ── Admin: surveys ────────────────────────────────────────────────────────────
 
-async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = "uz" if get_lang(ctx) == "ru" else "ru"
-    ctx.user_data["lang"] = lang
-    upsert_user(query.from_user.id, query.from_user.username, lang)
-    await query.edit_message_text(
-        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+async def adm_surv_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    if not is_admin(update.effective_user.id):
+        return ConversationHandler.END
+    ctx.user_data["new_survey"] = {"title": "", "questions": []}
+    await update.message.reply_text(
+        "📋 *Yangi so'rov*\n\nSo'rov *sarlavhasini* yozing:",
         parse_mode=ParseMode.MARKDOWN,
     )
-    return MAIN_MENU
+    return ADM_SURV_TITLE
+
+
+async def adm_surv_got_title(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    ctx.user_data["new_survey"]["title"] = update.message.text.strip()
+    await update.message.reply_text(
+        "✅ Sarlavha saqlandi!\n\n"
+        "Endi savollarni birma-bir yozing.\n"
+        "Tugaganda `/done` yozing.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return ADM_SURV_QUESTIONS
+
+
+async def adm_surv_got_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    ctx.user_data["new_survey"]["questions"].append(update.message.text.strip())
+    count = len(ctx.user_data["new_survey"]["questions"])
+    await update.message.reply_text(
+        f"✅ Savol #{count} qo'shildi. Davom eting yoki `/done` yozing."
+    )
+    return ADM_SURV_QUESTIONS
+
+
+async def adm_surv_done(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    ns = ctx.user_data.get("new_survey", {})
+    questions = ns.get("questions", [])
+
+    if not questions:
+        await update.message.reply_text("❌ Kamida 1 ta savol qo'shing!")
+        return ADM_SURV_QUESTIONS
+
+    title = ns["title"]
+    lines = [f"👁 *Ko'rinishi:*\n\n📋 *{title}*\n\n*Savollar:*\n"]
+    for i, q in enumerate(questions, 1):
+        lines.append(f"{i}. {q}\n")
+
+    await update.message.reply_text(
+        "".join(lines),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ Saqlash",      callback_data="surv_save"),
+            InlineKeyboardButton("❌ Bekor qilish", callback_data="surv_cancel"),
+        ]]),
+    )
+    return ADM_SURV_CONFIRM
+
+
+async def adm_surv_save(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    ns = ctx.user_data.get("new_survey", {})
+    survey_id = create_survey(ns["title"])
+    for i, q_text in enumerate(ns["questions"], 1):
+        add_survey_question(survey_id, q_text, i)
+
+    ctx.user_data["new_survey"] = {}
+    await query.edit_message_text(
+        f"✅ So'rov *#{survey_id}* yaratildi va faollashtirildi!",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    return ConversationHandler.END
+
+
+async def adm_surv_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text("❌ So'rov bekor qilindi.")
+    else:
+        await update.message.reply_text("❌ So'rov bekor qilindi.")
+    ctx.user_data["new_survey"] = {}
+    return ConversationHandler.END
+
+
+async def adm_surv_list(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    surveys = get_all_surveys()
+    if not surveys:
+        await update.message.reply_text("📭 So'rovlar yo'q.")
+        return
+    lines = ["📋 *Barcha so'rovlar:*\n"]
+    for s in surveys:
+        status = "✅" if s["is_active"] else "⏸"
+        count = get_survey_response_count(s["id"])
+        lines.append(f"{status} *#{s['id']}* — {_s(s['title'])} | {count} javob\n")
+    lines.append("\n`/togglesurvey <id>` — yoq/o'chir\n`/deletesurvey <id>` — o'chirish\n`/results <id>` — natijalar")
+    await update.message.reply_text("".join(lines), parse_mode=ParseMode.MARKDOWN)
+
+
+async def adm_surv_toggle(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    if not ctx.args:
+        await update.message.reply_text("Ishlatish: `/togglesurvey <id>`", parse_mode=ParseMode.MARKDOWN)
+        return
+    survey_id = int(ctx.args[0])
+    survey = get_survey(survey_id)
+    if not survey:
+        await update.message.reply_text(f"❌ #{survey_id} topilmadi.")
+        return
+    toggle_survey(survey_id)
+    new_state = "faollashtirildi ✅" if not survey["is_active"] else "to'xtatildi ⏸"
+    await update.message.reply_text(f"#{survey_id} — {new_state}")
+
+
+async def adm_surv_delete(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    if not ctx.args:
+        await update.message.reply_text("Ishlatish: `/deletesurvey <id>`", parse_mode=ParseMode.MARKDOWN)
+        return
+    survey_id = int(ctx.args[0])
+    survey = get_survey(survey_id)
+    if not survey:
+        await update.message.reply_text(f"❌ #{survey_id} topilmadi.")
+        return
+    delete_survey(survey_id)
+    await update.message.reply_text(f"✅ #{survey_id} o'chirildi.")
+
+
+async def adm_surv_results(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    if not ctx.args:
+        # show all surveys with counts
+        await adm_surv_list(update, ctx)
+        return
+
+    survey_id = int(ctx.args[0])
+    survey = get_survey(survey_id)
+    if not survey:
+        await update.message.reply_text(f"❌ #{survey_id} topilmadi.")
+        return
+
+    responses = get_survey_responses(survey_id)
+    if not responses:
+        await update.message.reply_text(f"📭 *#{survey_id}* uchun hali javoblar yo'q.", parse_mode=ParseMode.MARKDOWN)
+        return
+
+    header = f"📊 *#{survey_id} — {_s(survey['title'])}*\nJami: {len(responses)} javob\n\n"
+    await update.message.reply_text(header, parse_mode=ParseMode.MARKDOWN)
+
+    for resp in responses:
+        answers = get_response_answers(resp["id"])
+        name = _s(resp["first_name"] or "—")
+        uname = (resp["username"] or "—").replace("_", "\\_")
+        lines = [f"👤 *{name}* (@{uname}) | {resp['created_at'][:16]}\n"]
+        for a in answers:
+            lines.append(f"• _{_s(a['question_text'])}_\n  → {_s(a['answer_text'])}\n")
+        try:
+            await update.message.reply_text("".join(lines), parse_mode=ParseMode.MARKDOWN)
+        except Exception:
+            await update.message.reply_text("".join(lines))
 
 
 # ── Admin: /broadcast ─────────────────────────────────────────────────────────
@@ -540,7 +905,7 @@ async def broadcast_got_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) 
         InlineKeyboardButton("❌ Bekor",   callback_data="bc_no"),
     ]])
     await update.message.reply_text(
-        f"📢 *{count}* foydalanuvchiga xabar:\n\n———\n{update.message.text}\n———\n\nTasdiqlaysizmi?",
+        f"📢 *{count}* foydalanuvchiga:\n\n———\n{update.message.text}\n———\n\nTasdiqlaysizmi?",
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=keyboard,
     )
@@ -567,7 +932,7 @@ async def broadcast_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 async def broadcast_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text("❌ Xabar yuborish bekor qilindi.")
+    await query.edit_message_text("❌ Bekor qilindi.")
     return ConversationHandler.END
 
 
@@ -575,8 +940,10 @@ async def broadcast_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def unknown_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     lang = get_lang(ctx)
-    await update.message.reply_text(t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
-                                    parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+        parse_mode=ParseMode.MARKDOWN,
+    )
 
 
 # ── App setup ─────────────────────────────────────────────────────────────────
@@ -591,6 +958,27 @@ def main() -> None:
 
     app = Application.builder().token(BOT_TOKEN).build()
 
+    # Admin: create survey
+    new_survey_conv = ConversationHandler(
+        entry_points=[CommandHandler("newsurvey", adm_surv_start)],
+        states={
+            ADM_SURV_TITLE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, adm_surv_got_title)
+            ],
+            ADM_SURV_QUESTIONS: [
+                CommandHandler("done", adm_surv_done),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, adm_surv_got_question),
+            ],
+            ADM_SURV_CONFIRM: [
+                CallbackQueryHandler(adm_surv_save,   pattern="^surv_save$"),
+                CallbackQueryHandler(adm_surv_cancel, pattern="^surv_cancel$"),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", adm_surv_cancel)],
+        per_message=False,
+    )
+
+    # Admin: broadcast
     broadcast_conv = ConversationHandler(
         entry_points=[CommandHandler("broadcast", broadcast_start)],
         states={
@@ -604,47 +992,25 @@ def main() -> None:
         per_message=False,
     )
 
-    user_conv = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            LANG_SELECT: [
-                CallbackQueryHandler(lang_selected, pattern="^lang_(ru|uz)$"),
-            ],
-            MAIN_MENU: [
-                CallbackQueryHandler(show_main_menu,       pattern="^main_menu$"),
-                CallbackQueryHandler(show_portfolio,       pattern="^portfolio$"),
-                CallbackQueryHandler(show_portfolio_items, pattern="^pcat_"),
-                CallbackQueryHandler(show_contacts,        pattern="^contacts$"),
-                CallbackQueryHandler(switch_lang,          pattern="^switch_lang$"),
-                CallbackQueryHandler(lambda u, c: u.callback_query.answer(), pattern="^noop$"),
-            ],
-        },
-        fallbacks=[
-            CommandHandler("start", start),
-            MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
-        ],
-        per_message=False,
-        allow_reentry=True,
-    )
-
+    # Admin: add portfolio
     add_port_conv = ConversationHandler(
         entry_points=[CommandHandler("addportfolio", adm_port_add_start)],
         states={
-            PORT_CAT:     [CallbackQueryHandler(adm_port_got_cat,    pattern="^apc_")],
-            PORT_PHOTO:   [
+            PORT_CAT:   [CallbackQueryHandler(adm_port_got_cat,    pattern="^apc_")],
+            PORT_PHOTO: [
                 MessageHandler(filters.PHOTO, adm_port_got_photo),
                 CallbackQueryHandler(adm_port_skip_photo, pattern="^port_skip_photo$"),
             ],
-            PORT_TITLE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, adm_port_got_title)],
-            PORT_DESC:    [
+            PORT_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, adm_port_got_title)],
+            PORT_DESC:  [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, adm_port_got_desc),
                 CallbackQueryHandler(adm_port_skip_field, pattern="^port_skip_desc$"),
             ],
-            PORT_LINK:    [
+            PORT_LINK:  [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, adm_port_got_link),
                 CallbackQueryHandler(adm_port_skip_field, pattern="^port_skip_link$"),
             ],
-            PORT_VIDEO:   [
+            PORT_VIDEO: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, adm_port_got_video),
                 CallbackQueryHandler(adm_port_skip_field, pattern="^port_skip_video$"),
             ],
@@ -657,6 +1023,7 @@ def main() -> None:
         per_message=False,
     )
 
+    # Admin: delete portfolio
     del_port_conv = ConversationHandler(
         entry_points=[CommandHandler("deleteportfolio", adm_port_delete_start)],
         states={
@@ -669,12 +1036,55 @@ def main() -> None:
         per_message=False,
     )
 
+    # Main user conversation
+    user_conv = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            LANG_SELECT: [
+                CallbackQueryHandler(lang_selected, pattern="^lang_(ru|uz)$"),
+            ],
+            MAIN_MENU: [
+                CallbackQueryHandler(show_main_menu,       pattern="^main_menu$"),
+                CallbackQueryHandler(show_portfolio,       pattern="^portfolio$"),
+                CallbackQueryHandler(show_portfolio_items, pattern="^pcat_"),
+                CallbackQueryHandler(show_about,           pattern="^about$"),
+                CallbackQueryHandler(contact_start,        pattern="^contact$"),
+                CallbackQueryHandler(show_surveys,         pattern="^surveys$"),
+                CallbackQueryHandler(survey_selected,      pattern="^survey_\\d+$"),
+                CallbackQueryHandler(switch_lang,          pattern="^switch_lang$"),
+                CallbackQueryHandler(lambda u, c: u.callback_query.answer(), pattern="^noop$"),
+            ],
+            CONTACT_MSG: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, contact_got_message),
+                CallbackQueryHandler(show_main_menu, pattern="^main_menu$"),
+            ],
+            SURVEY_TAKING: [
+                CallbackQueryHandler(survey_begin,      pattern="^survey_begin$"),
+                CallbackQueryHandler(show_main_menu,    pattern="^main_menu$"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, survey_got_answer),
+            ],
+        },
+        fallbacks=[
+            CommandHandler("start", start),
+            MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
+        ],
+        per_message=False,
+        allow_reentry=True,
+    )
+
+    # Register admin one-shot commands
+    app.add_handler(CommandHandler("surveys",       adm_surv_list))
+    app.add_handler(CommandHandler("results",       adm_surv_results))
+    app.add_handler(CommandHandler("togglesurvey",  adm_surv_toggle))
+    app.add_handler(CommandHandler("deletesurvey",  adm_surv_delete))
+
+    app.add_handler(new_survey_conv)
     app.add_handler(broadcast_conv)
     app.add_handler(add_port_conv)
     app.add_handler(del_port_conv)
     app.add_handler(user_conv)
 
-    logger.info("Markenti bot started.")
+    logger.info("Bot started.")
     asyncio.run(_run(app))
 
 
