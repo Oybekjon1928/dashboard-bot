@@ -5,17 +5,16 @@ TEXTS = {
 
         # ── welcome / menu
         "welcome": (
-            "👋 Xush kelibsiz / Добро пожаловать!\n\n"
-            "Biz sizning biznesingiz uchun professional dashboard yaratamiz.\n\n"
-            "💵 $10 dan $150 gacha\n"
-            "⚡ 1 kundan 8 kungacha\n"
-            "✅ 3 ta bepul tuzatish kafolati\n\n"
-            "Quyidagi bo'limlardan birini tanlang 👇"
+            "👋 Добро пожаловать в *Markenti*!\n\n"
+            "Мы помогаем бизнесу расти через SMM\n"
+            "и стратегии брендинга.\n\n"
+            "📱 Instagram · Telegram · Facebook · YouTube\n"
+            "🧠 Брендинг · Стратегия · Аналитика аудитории\n\n"
+            "Выберите раздел 👇"
         ),
         "main_menu": "🏠 Главное меню",
         "btn_services":  "📊 Услуги",
         "btn_portfolio": "🖼 Портфолио",
-        "btn_calc":      "🧮 Калькулятор цены",
         "btn_faq":       "❓ FAQ",
         "btn_order":     "📝 Оставить заявку",
         "btn_contacts":  "📞 Контакты",
@@ -24,34 +23,26 @@ TEXTS = {
 
         # ── services
         "services_text": (
-            "📊 *Xizmatlarimiz*\n\n"
+            "🚀 *Услуги Markenti*\n\n"
 
-            "📋 *Excel / Google Sheets*\n"
-            "✅ Mavjud jadvallaringizni kuchaytiring\n"
-            "✅ Avtomatik hisobotlar va grafiklar\n"
-            "✅ Formulalar va pivot jadvallar\n"
-            "💵 $10–$30 · ⚡ 1–3 kun\n\n"
+            "📱 *SMM — Управление соцсетями*\n"
+            "✅ Ведение Instagram, Telegram, Facebook, YouTube\n"
+            "✅ Контент-план и создание публикаций\n"
+            "✅ Работа с аудиторией (комментарии, DM)\n"
+            "✅ Ежемесячный отчёт и аналитика\n"
+            "💰 Цена — по договорённости\n"
+            "⚡ Старт проекта — за 1–3 дня\n\n"
 
-            "📊 *Business Analytics*\n"
-            "✅ Qaysi mahsulot ko'proq sotilishini biling\n"
-            "✅ Zarar keltirayotgan xarajatni toping\n"
-            "✅ KPI va savdo o'sishini kuzating\n"
-            "💵 $20–$50 · ⚡ 3–5 kun\n\n"
+            "🧠 *Поведение потребителей & Бренд-стратегия*\n"
+            "✅ Анализ целевой аудитории и конкурентов\n"
+            "✅ Позиционирование бренда\n"
+            "✅ Голос, тон и визуальный стиль\n"
+            "✅ Готовая маркетинговая стратегия\n"
+            "💰 Цена — зависит от объёма задачи\n"
+            "⚡ Длительность — 2–4 недели\n\n"
 
-            "📈 *Power BI / Tableau*\n"
-            "✅ Har qanday manbadan ma'lumot oling\n"
-            "✅ Interaktiv filtrlar va grafiklar\n"
-            "✅ Avtomatik yangilanish\n"
-            "💵 $30–$80 · ⚡ 3–5 kun\n\n"
-
-            "🌐 *Web / SaaS Dashboard*\n"
-            "✅ Sayt yoki ilovangizga o'rnatiladi\n"
-            "✅ Real vaqt ma'lumotlari\n"
-            "✅ Foydalanuvchi ruxsatlari\n"
-            "💵 $50–$150 · ⚡ 5–8 kun\n\n"
-
-            "⭐ Barcha xizmatlarda — *3 bepul tuzatish* kafolati\n\n"
-            "👇 Hoziroq buyurtma bering:"
+            "🎯 Начнём с *бесплатной консультации*!\n\n"
+            "👇 Оставьте заявку прямо сейчас:"
         ),
 
         # ── portfolio
@@ -63,19 +54,27 @@ TEXTS = {
             "📞 *Контакты*\n\n"
             "По всем вопросам обращайтесь напрямую:\n"
             "👤 Менеджер: @{admin_username}\n\n"
-            "Или оставьте заявку прямо здесь — мы свяжемся с вами!"
+            "Или оставьте заявку — мы свяжемся с вами!"
         ),
 
         # ── order flow
-        "order_start":   "📝 *Заявка — шаг 1/4*\n\nВведите ваше *имя*:",
-        "order_phone":   "📱 *Шаг 2/4*\n\nВведите *номер телефона*:",
-        "order_type":    "📊 *Шаг 3/4*\n\nКакой тип дашборда нужен?",
-        "order_budget":  "💰 *Шаг 4/4*\n\nУкажите *бюджет и сроки*\n_(например: $50, нужно за 3 дня)_:",
+        "order_start":   "📝 *Заявка — шаг 1/6*\n\nВведите ваше *имя*:",
+        "order_phone":   "📱 *Шаг 2/6*\n\nВведите *номер телефона*:",
+        "order_service": "🎯 *Шаг 3/6*\n\nКакая услуга вас интересует?",
+        "order_niche":   "🏢 *Шаг 4/6*\n\nОпишите ваш *бизнес / нишу*\n_(например: интернет-магазин, кафе, фитнес)_:",
+        "order_goal":    "📊 *Шаг 5/6*\n\nКакова ваша главная *цель*?",
+        "order_budget":  (
+            "💰 *Шаг 6/6*\n\nУкажите ваш *бюджет*\n"
+            "_(например: $200/мес или $500 разово)_\n\n"
+            "Есть ли уже аккаунты в соцсетях? Напишите кратко:"
+        ),
         "order_confirm": (
             "✅ *Проверьте заявку:*\n\n"
             "👤 {name}\n"
             "📱 {phone}\n"
-            "📊 {dtype}\n"
+            "🎯 {dtype}\n"
+            "🏢 {niche}\n"
+            "📊 {goal}\n"
             "💰 {budget}\n\n"
             "Всё верно?"
         ),
@@ -94,117 +93,25 @@ TEXTS = {
             "Если есть вопросы — @{admin_username}"
         ),
 
-        # ── dashboard type labels (shared between order & calculator)
-        "type_bi":        "📈 Power BI / Tableau",
-        "type_web":       "🌐 Web / SaaS",
-        "type_excel":     "📋 Excel / Google Sheets",
-        "type_analytics": "📊 Business Analytics",
+        # ── service type labels
+        "type_smm":      "📱 SMM (соцсети)",
+        "type_branding": "🧠 Брендинг & Стратегия",
+        "type_both":     "🚀 Оба направления",
 
-        # ── admin notification
-        "admin_new_order": (
-            "🔔 *Новая заявка \\#{order_id}*\n\n"
-            "👤 Имя: {name}\n"
-            "📱 Телефон: {phone}\n"
-            "📊 Тип: {dtype}\n"
-            "💰 Бюджет/сроки: {budget}\n"
-            "📋 Описание: {desc}\n\n"
-            "🆔 Telegram ID: `{user_id}`\n"
-            "👤 Username: @{username}\n\n"
-            "Ответьте командой:\n"
-            "`/done {order_id}` — выполнено\n"
-            "`/reject {order_id} причина` — отказ"
-        ),
+        # ── goal labels
+        "goal_followers": "👥 Больше подписчиков",
+        "goal_sales":     "💸 Увеличить продажи",
+        "goal_awareness": "📢 Узнаваемость бренда",
 
-        # ── pricing calculator
-        "calc_step1": "🧮 *Калькулятор цены*\n\nШаг 1/3: Выберите тип дашборда:",
-        "calc_step2": "📦 Шаг 2/3: Сколько источников данных будет подключено?",
-        "calc_step3": "🕐 Шаг 3/3: В какие сроки нужен дашборд?",
-        "calc_result": (
-            "💰 *Taxminiy narx*\n\n"
-            "📊 {dtype}\n"
-            "📦 {sources}\n"
-            "⚡ {deadline}\n\n"
-            "💵 *${min_p} — ${max_p}*\n\n"
-            "✅ Aniq narx loyihani ko'rib chiqib belgilanadi\n"
-            "🎯 Bugun buyurtma bering — muddatni kafolatlaymiz!\n"
-        ),
-        "calc_src_1_2": "1–2 источника",
-        "calc_src_3_5": "3–5 источников",
-        "calc_src_6":   "6+ источников",
-        "calc_dl_urgent": "⚡ Срочно (1–2 дня)  +50%",
-        "calc_dl_normal": "📅 Стандарт (3–5 дней)",
-        "calc_dl_flex":   "🌿 Гибко (6–8 дней)  −10%",
-        "btn_calc_order":  "📝 Оформить заявку",
-        "btn_recalc":      "🔄 Пересчитать",
-
-        # ── FAQ
-        "faq_menu": "❓ *Часто задаваемые вопросы*\n\nВыберите вопрос:",
-        "faq_q1": "💰 Сколько стоит дашборд?",
-        "faq_q2": "⏱ Сколько времени займёт разработка?",
-        "faq_q3": "📂 Какие данные нужны для начала?",
-        "faq_q4": "🔧 Можно ли вносить изменения после сдачи?",
-        "faq_q5": "📦 В каком формате передаётся готовый дашборд?",
-        "faq_a1": (
-            "💰 *Narx qancha?*\n\n"
-            "📋 Excel / Google Sheets — $10–$30\n"
-            "📊 Business Analytics — $20–$50\n"
-            "📈 Power BI / Tableau — $30–$80\n"
-            "🌐 Web / SaaS — $50–$150\n\n"
-            "Narxga manba soni va muddat ta'sir qiladi.\n"
-            "🧮 Aniq narxni bilish uchun *Kalkulyator* dan foydalaning!\n\n"
-            "👇 Hoziroq buyurtma bering — narxni kelishamiz:"
-        ),
-        "faq_a2": (
-            "⚡ *Muddat qancha?*\n\n"
-            "⚡ Shoshilinch — 1–2 ish kuni (+50%)\n"
-            "📅 Standart — 3–5 ish kuni\n"
-            "🌿 Moslashuvchan — 6–8 ish kuni (−10%)\n\n"
-            "✅ Buyurtma berilgan kuni ish boshlanadi.\n\n"
-            "👇 Bugun buyurtma bering:"
-        ),
-        "faq_a3": (
-            "📂 *Boshlash uchun nima kerak?*\n\n"
-            "📋 *Excel / Sheets uchun:*\n"
-            "• Ma'lumot fayli (Excel, CSV, Sheets)\n"
-            "• Muhim ko'rsatkichlar ro'yxati\n\n"
-            "📈 *Power BI / Tableau uchun:*\n"
-            "• Ma'lumot manbai (fayl, baza, 1C, CRM)\n"
-            "• Kerakli metrikalar va filtrlar\n\n"
-            "🌐 *Web Dashboard uchun:*\n"
-            "• Funksional tavsif va grafiklar ro'yxati\n"
-            "• Ma'lumot manbai (API yoki baza)\n\n"
-            "📊 *Business Analytics uchun:*\n"
-            "• Ma'lumotlar yuklamasi\n"
-            "• Tahlil maqsadi\n\n"
-            "💡 Noaniq bo'lsa — shunchaki yozing, biz o'zimiz yo'llaymiz!\n\n"
-            "👇 Hoziroq ariza qoldiring:"
-        ),
-        "faq_a4": (
-            "🔧 *Topshirilgandan keyin o'zgartirish?*\n\n"
-            "✅ Ha, albatta!\n\n"
-            "• 7 kun ichida *3 ta bepul tuzatish*\n"
-            "• Katta o'zgarishlar — alohida kelishuv\n\n"
-            "Siz natijadan to'liq mamnun bo'lguningizcha ishlaymiz.\n\n"
-            "👇 Buyurtma bering:"
-        ),
-        "faq_a5": (
-            "📦 *Tayyor ish qanday shaklda beriladi?*\n\n"
-            "📋 Excel / Sheets — fayl yoki havola\n"
-            "📈 Power BI / Tableau — fayl + yo'riqnoma\n"
-            "🌐 Web — hosting havolasi yoki kod\n\n"
-            "✅ Har birida qisqa foydalanish yo'riqnomasi bepul!\n\n"
-            "👇 Hoziroq buyurtma bering:"
-        ),
-        "btn_back_faq": "⬅️ К списку вопросов",
-
-        # ── admin order notification
+        # ── admin notifications
         "admin_order_notify": (
             "🔔 *Yangi buyurtma #{order_id}!*\n\n"
             "👤 {name}\n"
             "📱 {phone}\n"
-            "📊 {dtype}\n"
-            "💰 {budget}\n"
-            "📋 {desc}\n\n"
+            "🎯 Xizmat: {dtype}\n"
+            "🏢 Soha: {niche}\n"
+            "📊 Maqsad: {goal}\n"
+            "💰 Byudjet: {budget}\n\n"
             "🆔 ID: `{user_id}` | @{username}\n\n"
             "✅ Qabul qilish: `/accept {order_id}`\n"
             "❌ Rad etish: `/reject {order_id} sabab`"
@@ -212,7 +119,7 @@ TEXTS = {
         "admin_order_remind": (
             "⏰ *15 daqiqa o'tdi! #{order_id} buyurtmaga javob berilmadi!*\n\n"
             "👤 {name} | 📱 {phone}\n"
-            "📊 {dtype} | 💰 {budget}\n\n"
+            "🎯 {dtype} | 💰 {budget}\n\n"
             "✅ Qabul: `/accept {order_id}`\n"
             "❌ Rad: `/reject {order_id} sabab`"
         ),
@@ -233,6 +140,66 @@ TEXTS = {
         "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
         "admin_accept_404": "❌ #{id} topilmadi.",
 
+        # ── FAQ
+        "faq_menu": "❓ *Часто задаваемые вопросы*\n\nВыберите вопрос:",
+        "faq_q1": "💰 Сколько стоят услуги?",
+        "faq_q2": "⏱ Когда появятся результаты?",
+        "faq_q3": "📱 С какими платформами работаете?",
+        "faq_q4": "🤝 Как строится сотрудничество?",
+        "faq_q5": "📊 Как отслеживаем результаты?",
+        "faq_a1": (
+            "💰 *Xizmat narxi qancha?*\n\n"
+            "Narx loyiha hajmi va murakkabligiga qarab belgilanadi:\n\n"
+            "📱 *SMM xizmati:*\n"
+            "• Kichik biznes — arzon paketlar\n"
+            "• O'rta va katta biznes — kengaytirilgan paket\n\n"
+            "🧠 *Brend strategiyasi:*\n"
+            "• Bir martalik loyiha — muzokaraga asosan\n\n"
+            "🎯 Aniq narxni bilish uchun *bepul maslahat* oling!\n\n"
+            "👇 Hoziroq ariza qoldiring:"
+        ),
+        "faq_a2": (
+            "⏱ *Natijalar qachon ko'rinadi?*\n\n"
+            "📱 *SMM:*\n"
+            "• 1-oy: Kontent sifati va doimiylik\n"
+            "• 2–3-oy: Organik o'sish sezilarli\n"
+            "• 3–6-oy: Sotuv natijalariga ta'sir\n\n"
+            "🧠 *Brend strategiyasi:*\n"
+            "• 2–4 hafta: Tayyor strategiya\n\n"
+            "✅ Har oyda hisobot va tahlil taqdim etamiz.\n\n"
+            "👇 Boshlaylik:"
+        ),
+        "faq_a3": (
+            "📱 *Qaysi platformalarda ishlaymiz?*\n\n"
+            "✅ *Instagram* — rasm, reels, stories\n"
+            "✅ *Telegram* — kanal va guruh boshqaruvi\n"
+            "✅ *Facebook* — korporativ sahifa\n"
+            "✅ *YouTube* — video kontent strategiyasi\n\n"
+            "💡 Bir nechta platformani birgalikda boshqarish ham mumkin!\n\n"
+            "👇 Ariza qoldiring:"
+        ),
+        "faq_a4": (
+            "🤝 *Hamkorlik qanday ishlaydi?*\n\n"
+            "1️⃣ Bepul maslahat — biznesni tushunib olamiz\n"
+            "2️⃣ Tahlil — raqobatchilar va auditoriyangiz\n"
+            "3️⃣ Strategiya — kontent rejasi va maqsadlar\n"
+            "4️⃣ Ijro — postlar, hikoyalar, videolar\n"
+            "5️⃣ Hisobot — har oyda natijalar tahlili\n\n"
+            "✅ Siz faqat natijaga e'tibor qilasiz!\n\n"
+            "👇 Boshlaylik:"
+        ),
+        "faq_a5": (
+            "📊 *Natijalarni qanday kuzatamiz?*\n\n"
+            "✅ Har oyda batafsil hisobot:\n"
+            "• Auditoriya o'sishi\n"
+            "• Qamrov va ko'rishlar soni\n"
+            "• Engagement (like, izoh, ulashish)\n"
+            "• Sayt yoki do'konga o'tishlar\n\n"
+            "📊 Ko'rsatkichlar asosida strategiyani moslashtiramiz.\n\n"
+            "👇 Hoziroq boshlaymiz:"
+        ),
+        "btn_back_faq": "⬅️ К списку вопросов",
+
         # ── portfolio (user)
         "portfolio_select_cat":  "🖼 *Портфолио*\n\nВыберите категорию:",
         "portfolio_empty_cat":   "📭 В этой категории пока нет работ.",
@@ -246,7 +213,7 @@ TEXTS = {
         "btn_port_prev":      "⬅️",
         "btn_port_next":      "➡️",
         "btn_port_cats":      "🗂 Категории",
-        "btn_port_order":     "📝 Заказать такой же",
+        "btn_port_order":     "📝 Заказать такое же",
 
         # ── portfolio (admin)
         "adm_port_step_cat":   "📂 Выберите категорию:",
@@ -265,18 +232,18 @@ TEXTS = {
             "🖼 Фото: {photo}\n\n"
             "Сохранить?"
         ),
-        "adm_port_saved":      "✅ Работа добавлена в портфолио!",
-        "adm_port_cancelled":  "❌ Отменено.",
-        "adm_port_list_title": "🗂 *Все работы в портфолио:*\n",
-        "adm_port_list_row":   "#{id} [{cat}] {title}\n",
-        "adm_port_empty":      "📭 Портфолио пустое.",
-        "adm_port_del_confirm":"🗑 Удалить *#{id} — {title}*?",
-        "adm_port_deleted":    "✅ Работа #{id} удалена.",
-        "btn_skip":            "⏭ Пропустить",
-        "btn_save":            "✅ Сохранить",
-        "btn_delete":          "🗑 Удалить",
-        "btn_del_yes":         "✅ Да, удалить",
-        "btn_del_no":          "❌ Отмена",
+        "adm_port_saved":       "✅ Работа добавлена в портфолио!",
+        "adm_port_cancelled":   "❌ Отменено.",
+        "adm_port_list_title":  "🗂 *Все работы в портфолио:*\n",
+        "adm_port_list_row":    "#{id} [{cat}] {title}\n",
+        "adm_port_empty":       "📭 Портфолио пустое.",
+        "adm_port_del_confirm": "🗑 Удалить *#{id} — {title}*?",
+        "adm_port_deleted":     "✅ Работа #{id} удалена.",
+        "btn_skip":             "⏭ Пропустить",
+        "btn_save":             "✅ Сохранить",
+        "btn_delete":           "🗑 Удалить",
+        "btn_del_yes":          "✅ Да, удалить",
+        "btn_del_no":           "❌ Отмена",
 
         # ── channel
         "btn_channel": "📢 Наш канал",
@@ -289,9 +256,9 @@ TEXTS = {
         "lang_switched": "Язык изменён на русский.",
 
         # ── my orders
-        "myorders_empty": "📭 У вас пока нет заявок. Оставьте первую заявку!",
+        "myorders_empty":  "📭 У вас пока нет заявок. Оставьте первую заявку!",
         "myorders_header": "📋 *Ваши заявки:*\n",
-        "myorders_row": "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
+        "myorders_row":    "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
         "status_pending":  "⏳ В обработке",
         "status_done":     "✅ Выполнено",
         "status_rejected": "❌ Отклонено",
@@ -303,13 +270,13 @@ TEXTS = {
         ),
         "btn_reminder_continue": "▶️ Продолжить",
         "btn_reminder_cancel":   "❌ Отменить заявку",
-        "reminder_cancelled": "Заявка отменена. Возвращаю в меню.",
+        "reminder_cancelled":    "Заявка отменена. Возвращаю в меню.",
 
         # ── free consultation
-        "btn_consult":      "📅 Бесплатная консультация",
-        "consult_step1":    "📅 *Бесплатная консультация*\n\nВыберите удобный день:",
-        "consult_step2":    "🕐 Выберите удобное время:",
-        "consult_step3":    "📱 Введите ваш *номер телефона* для подтверждения:",
+        "btn_consult":   "📅 Бесплатная консультация",
+        "consult_step1": "📅 *Бесплатная консультация*\n\nВыберите удобный день:",
+        "consult_step2": "🕐 Выберите удобное время:",
+        "consult_step3": "📱 Введите ваш *номер телефона* для подтверждения:",
         "consult_confirm": (
             "✅ *Консультация забронирована!*\n\n"
             "📅 День: {day}\n"
@@ -325,9 +292,9 @@ TEXTS = {
             "🕐 Время: {time}\n\n"
             "🆔 ID: `{user_id}`"
         ),
-        "consult_day_0": "Bugun",
-        "consult_day_1": "Ertaga",
-        "consult_day_2": "Indiniga",
+        "consult_day_0":    "Bugun",
+        "consult_day_1":    "Ertaga",
+        "consult_day_2":    "Indiniga",
         "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
         "all_slots_booked": "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
         "consult_t_9":  "09:00",
@@ -343,17 +310,16 @@ TEXTS = {
 
         # ── welcome / menu
         "welcome": (
-            "👋 Xush kelibsiz!\n\n"
-            "Biz sizning biznesingiz uchun professional dashboard yaratamiz.\n\n"
-            "💵 $10 dan $150 gacha\n"
-            "⚡ 1 kundan 8 kungacha\n"
-            "✅ 3 ta bepul tuzatish kafolati\n\n"
-            "Quyidagi bo'limlardan birini tanlang 👇"
+            "👋 *Markenti*ga xush kelibsiz!\n\n"
+            "Biz biznesingizni SMM va brend strategiyasi\n"
+            "orqali o'sishiga yordam beramiz.\n\n"
+            "📱 Instagram · Telegram · Facebook · YouTube\n"
+            "🧠 Brending · Strategiya · Auditoriya tahlili\n\n"
+            "Bo'limlardan birini tanlang 👇"
         ),
         "main_menu": "🏠 Asosiy menyu",
         "btn_services":  "📊 Xizmatlar",
         "btn_portfolio": "🖼 Portfolio",
-        "btn_calc":      "🧮 Narx kalkulyatori",
         "btn_faq":       "❓ FAQ",
         "btn_order":     "📝 Ariza qoldirish",
         "btn_contacts":  "📞 Aloqa",
@@ -362,34 +328,26 @@ TEXTS = {
 
         # ── services
         "services_text": (
-            "📊 *Xizmatlarimiz*\n\n"
+            "🚀 *Markenti xizmatlari*\n\n"
 
-            "📋 *Excel / Google Sheets*\n"
-            "✅ Mavjud jadvallaringizni kuchaytiring\n"
-            "✅ Avtomatik hisobotlar va grafiklar\n"
-            "✅ Formulalar va pivot jadvallar\n"
-            "💵 $10–$30 · ⚡ 1–3 kun\n\n"
+            "📱 *SMM — Ijtimoiy tarmoqlar boshqaruvi*\n"
+            "✅ Instagram, Telegram, Facebook, YouTube\n"
+            "✅ Kontent rejasi va post yaratish\n"
+            "✅ Auditoriya bilan ishlash (izohlar, DM)\n"
+            "✅ Har oyda hisobot va tahlil\n"
+            "💰 Narx — muzokaraga asosan\n"
+            "⚡ Loyiha boshlanishi — 1–3 kun ichida\n\n"
 
-            "📊 *Business Analytics*\n"
-            "✅ Qaysi mahsulot ko'proq sotilishini biling\n"
-            "✅ Zarar keltirayotgan xarajatni toping\n"
-            "✅ KPI va savdo o'sishini kuzating\n"
-            "💵 $20–$50 · ⚡ 3–5 kun\n\n"
+            "🧠 *Iste'molchi xulqi & Brend strategiyasi*\n"
+            "✅ Maqsadli auditoriya va raqobatchilar tahlili\n"
+            "✅ Brend pozitsioneri\n"
+            "✅ Ovoz, ton va vizual uslub\n"
+            "✅ Tayyor marketing strategiyasi\n"
+            "💰 Narx — vazifa hajmiga qarab\n"
+            "⚡ Davomiyligi — 2–4 hafta\n\n"
 
-            "📈 *Power BI / Tableau*\n"
-            "✅ Har qanday manbadan ma'lumot oling\n"
-            "✅ Interaktiv filtrlar va grafiklar\n"
-            "✅ Avtomatik yangilanish\n"
-            "💵 $30–$80 · ⚡ 3–5 kun\n\n"
-
-            "🌐 *Web / SaaS Dashboard*\n"
-            "✅ Sayt yoki ilovangizga o'rnatiladi\n"
-            "✅ Real vaqt ma'lumotlari\n"
-            "✅ Foydalanuvchi ruxsatlari\n"
-            "💵 $50–$150 · ⚡ 5–8 kun\n\n"
-
-            "⭐ Barcha xizmatlarda — *3 bepul tuzatish* kafolati\n\n"
-            "👇 Hoziroq buyurtma bering:"
+            "🎯 *Bepul maslahat* bilan boshlaymiz!\n\n"
+            "👇 Hoziroq ariza qoldiring:"
         ),
 
         # ── portfolio
@@ -405,15 +363,23 @@ TEXTS = {
         ),
 
         # ── order flow
-        "order_start":   "📝 *Ariza — 1/4-qadam*\n\n*Ismingizni* kiriting:",
-        "order_phone":   "📱 *2/4-qadam*\n\n*Telefon raqamingizni* kiriting:",
-        "order_type":    "📊 *3/4-qadam*\n\nQaysi turdagi dashboard kerak?",
-        "order_budget":  "💰 *4/4-qadam*\n\n*Byudjet va muddatni* kiriting\n_(masalan: $50, 3 kun ichida kerak)_:",
+        "order_start":   "📝 *Ariza — 1/6-qadam*\n\n*Ismingizni* kiriting:",
+        "order_phone":   "📱 *2/6-qadam*\n\n*Telefon raqamingizni* kiriting:",
+        "order_service": "🎯 *3/6-qadam*\n\nQaysi xizmat qiziqtiradi?",
+        "order_niche":   "🏢 *4/6-qadam*\n\n*Biznesingiz / sohangizni* tasvirlab bering\n_(masalan: kiyim do'koni, restoran, fitnes)_:",
+        "order_goal":    "📊 *5/6-qadam*\n\nAsosiy *maqsadingiz* nima?",
+        "order_budget":  (
+            "💰 *6/6-qadam*\n\n*Byudjetingizni* kiriting\n"
+            "_(masalan: $200/oy yoki $500 bir marta)_\n\n"
+            "Hozirda ijtimoiy tarmoqlarda akkauntlaringiz bormi? Qisqacha yozing:"
+        ),
         "order_confirm": (
             "✅ *Arizangizni tekshiring:*\n\n"
             "👤 {name}\n"
             "📱 {phone}\n"
-            "📊 {dtype}\n"
+            "🎯 {dtype}\n"
+            "🏢 {niche}\n"
+            "📊 {goal}\n"
             "💰 {budget}\n\n"
             "Hammasi to'g'rimi?"
         ),
@@ -432,117 +398,25 @@ TEXTS = {
             "Savollar bo'lsa — @{admin_username}"
         ),
 
-        # ── dashboard type labels
-        "type_bi":        "📈 Power BI / Tableau",
-        "type_web":       "🌐 Web / SaaS",
-        "type_excel":     "📋 Excel / Google Sheets",
-        "type_analytics": "📊 Business Analytics",
+        # ── service type labels
+        "type_smm":      "📱 SMM (ijtimoiy tarmoqlar)",
+        "type_branding": "🧠 Brending & Strategiya",
+        "type_both":     "🚀 Ikkalasi ham",
 
-        # ── admin notification
-        "admin_new_order": (
-            "🔔 *Yangi ariza \\#{order_id}*\n\n"
-            "👤 Ism: {name}\n"
-            "📱 Telefon: {phone}\n"
-            "📊 Tur: {dtype}\n"
-            "💰 Byudjet/muddat: {budget}\n"
-            "📋 Tavsif: {desc}\n\n"
-            "🆔 Telegram ID: `{user_id}`\n"
-            "👤 Username: @{username}\n\n"
-            "Komanda bilan javob bering:\n"
-            "`/done {order_id}` — bajarildi\n"
-            "`/reject {order_id} sabab` — rad etish"
-        ),
+        # ── goal labels
+        "goal_followers": "👥 Ko'proq obunachilar",
+        "goal_sales":     "💸 Savdolarni oshirish",
+        "goal_awareness": "📢 Brend taniqliligini oshirish",
 
-        # ── pricing calculator
-        "calc_step1": "🧮 *Narx kalkulyatori*\n\n1/3-qadam: Dashboard turini tanlang:",
-        "calc_step2": "📦 2/3-qadam: Nechta ma'lumot manbai ulanadi?",
-        "calc_step3": "🕐 3/3-qadam: Qanday muddatda dashboard kerak?",
-        "calc_result": (
-            "💰 *Taxminiy narx*\n\n"
-            "📊 {dtype}\n"
-            "📦 {sources}\n"
-            "⚡ {deadline}\n\n"
-            "💵 *${min_p} — ${max_p}*\n\n"
-            "✅ Aniq narx loyihani ko'rib chiqib belgilanadi\n"
-            "🎯 Bugun buyurtma bering — muddatni kafolatlaymiz!\n"
-        ),
-        "calc_src_1_2": "1–2 manba",
-        "calc_src_3_5": "3–5 manba",
-        "calc_src_6":   "6+ manba",
-        "calc_dl_urgent": "⚡ Shoshilinch (1–2 kun)  +50%",
-        "calc_dl_normal": "📅 Standart (3–5 kun)",
-        "calc_dl_flex":   "🌿 Moslashuvchan (6–8 kun)  −10%",
-        "btn_calc_order":  "📝 Ariza qoldirish",
-        "btn_recalc":      "🔄 Qayta hisoblash",
-
-        # ── FAQ
-        "faq_menu": "❓ *Ko'p so'raladigan savollar*\n\nSavolni tanlang:",
-        "faq_q1": "💰 Dashboard narxi qancha?",
-        "faq_q2": "⏱ Ishlab chiqish qancha vaqt oladi?",
-        "faq_q3": "📂 Boshlash uchun qanday ma'lumotlar kerak?",
-        "faq_q4": "🔧 Topshirilgandan keyin o'zgartirish mumkinmi?",
-        "faq_q5": "📦 Tayyor dashboard qanday shaklda beriladi?",
-        "faq_a1": (
-            "💰 *Narx qancha?*\n\n"
-            "📋 Excel / Google Sheets — $10–$30\n"
-            "📊 Business Analytics — $20–$50\n"
-            "📈 Power BI / Tableau — $30–$80\n"
-            "🌐 Web / SaaS — $50–$150\n\n"
-            "Narxga manba soni va muddat ta'sir qiladi.\n"
-            "🧮 Aniq narxni bilish uchun *Kalkulyator* dan foydalaning!\n\n"
-            "👇 Hoziroq buyurtma bering — narxni kelishamiz:"
-        ),
-        "faq_a2": (
-            "⚡ *Muddat qancha?*\n\n"
-            "⚡ Shoshilinch — 1–2 ish kuni (+50%)\n"
-            "📅 Standart — 3–5 ish kuni\n"
-            "🌿 Moslashuvchan — 6–8 ish kuni (−10%)\n\n"
-            "✅ Buyurtma berilgan kuni ish boshlanadi.\n\n"
-            "👇 Bugun buyurtma bering:"
-        ),
-        "faq_a3": (
-            "📂 *Boshlash uchun nima kerak?*\n\n"
-            "📋 *Excel / Sheets uchun:*\n"
-            "• Ma'lumot fayli (Excel, CSV, Sheets)\n"
-            "• Muhim ko'rsatkichlar ro'yxati\n\n"
-            "📈 *Power BI / Tableau uchun:*\n"
-            "• Ma'lumot manbai (fayl, baza, 1C, CRM)\n"
-            "• Kerakli metrikalar va filtrlar\n\n"
-            "🌐 *Web Dashboard uchun:*\n"
-            "• Funksional tavsif va grafiklar ro'yxati\n"
-            "• Ma'lumot manbai (API yoki baza)\n\n"
-            "📊 *Business Analytics uchun:*\n"
-            "• Ma'lumotlar yuklamasi\n"
-            "• Tahlil maqsadi\n\n"
-            "💡 Noaniq bo'lsa — shunchaki yozing, biz yo'llaymiz!\n\n"
-            "👇 Hoziroq ariza qoldiring:"
-        ),
-        "faq_a4": (
-            "🔧 *Topshirilgandan keyin o'zgartirish?*\n\n"
-            "✅ Ha, albatta!\n\n"
-            "• 7 kun ichida *3 ta bepul tuzatish*\n"
-            "• Katta o'zgarishlar — alohida kelishuv\n\n"
-            "Siz natijadan to'liq mamnun bo'lguningizcha ishlaymiz.\n\n"
-            "👇 Buyurtma bering:"
-        ),
-        "faq_a5": (
-            "📦 *Tayyor ish qanday shaklda beriladi?*\n\n"
-            "📋 Excel / Sheets — fayl yoki havola\n"
-            "📈 Power BI / Tableau — fayl + yo'riqnoma\n"
-            "🌐 Web — hosting havolasi yoki kod\n\n"
-            "✅ Har birida qisqa foydalanish yo'riqnomasi bepul!\n\n"
-            "👇 Hoziroq buyurtma bering:"
-        ),
-        "btn_back_faq": "⬅️ Savollarga qaytish",
-
-        # ── admin order/consult notifications
+        # ── admin notifications
         "admin_order_notify": (
             "🔔 *Yangi buyurtma #{order_id}!*\n\n"
             "👤 {name}\n"
             "📱 {phone}\n"
-            "📊 {dtype}\n"
-            "💰 {budget}\n"
-            "📋 {desc}\n\n"
+            "🎯 Xizmat: {dtype}\n"
+            "🏢 Soha: {niche}\n"
+            "📊 Maqsad: {goal}\n"
+            "💰 Byudjet: {budget}\n\n"
             "🆔 ID: `{user_id}` | @{username}\n\n"
             "✅ Qabul qilish: `/accept {order_id}`\n"
             "❌ Rad etish: `/reject {order_id} sabab`"
@@ -550,7 +424,7 @@ TEXTS = {
         "admin_order_remind": (
             "⏰ *15 daqiqa o'tdi! #{order_id} buyurtmaga javob berilmadi!*\n\n"
             "👤 {name} | 📱 {phone}\n"
-            "📊 {dtype} | 💰 {budget}\n\n"
+            "🎯 {dtype} | 💰 {budget}\n\n"
             "✅ Qabul: `/accept {order_id}`\n"
             "❌ Rad: `/reject {order_id} sabab`"
         ),
@@ -570,6 +444,66 @@ TEXTS = {
         ),
         "admin_accepted":   "✅ #{id} qabul qilindi. Mijoz bilan bog'laning!",
         "admin_accept_404": "❌ #{id} topilmadi.",
+
+        # ── FAQ
+        "faq_menu": "❓ *Ko'p so'raladigan savollar*\n\nSavolni tanlang:",
+        "faq_q1": "💰 Xizmat narxi qancha?",
+        "faq_q2": "⏱ Natijalar qachon ko'rinadi?",
+        "faq_q3": "📱 Qaysi platformalarda ishlaysiz?",
+        "faq_q4": "🤝 Hamkorlik jarayoni qanday?",
+        "faq_q5": "📊 Natijalarni qanday kuzatamiz?",
+        "faq_a1": (
+            "💰 *Xizmat narxi qancha?*\n\n"
+            "Narx loyiha hajmi va murakkabligiga qarab belgilanadi:\n\n"
+            "📱 *SMM xizmati:*\n"
+            "• Kichik biznes — arzon paketlar\n"
+            "• O'rta va katta biznes — kengaytirilgan paket\n\n"
+            "🧠 *Brend strategiyasi:*\n"
+            "• Bir martalik loyiha — muzokaraga asosan\n\n"
+            "🎯 Aniq narxni bilish uchun *bepul maslahat* oling!\n\n"
+            "👇 Hoziroq ariza qoldiring:"
+        ),
+        "faq_a2": (
+            "⏱ *Natijalar qachon ko'rinadi?*\n\n"
+            "📱 *SMM:*\n"
+            "• 1-oy: Kontent sifati va doimiylik\n"
+            "• 2–3-oy: Organik o'sish sezilarli\n"
+            "• 3–6-oy: Sotuv natijalariga ta'sir\n\n"
+            "🧠 *Brend strategiyasi:*\n"
+            "• 2–4 hafta: Tayyor strategiya\n\n"
+            "✅ Har oyda hisobot va tahlil taqdim etamiz.\n\n"
+            "👇 Boshlaylik:"
+        ),
+        "faq_a3": (
+            "📱 *Qaysi platformalarda ishlaymiz?*\n\n"
+            "✅ *Instagram* — rasm, reels, stories\n"
+            "✅ *Telegram* — kanal va guruh boshqaruvi\n"
+            "✅ *Facebook* — korporativ sahifa\n"
+            "✅ *YouTube* — video kontent strategiyasi\n\n"
+            "💡 Bir nechta platformani birgalikda boshqarish ham mumkin!\n\n"
+            "👇 Ariza qoldiring:"
+        ),
+        "faq_a4": (
+            "🤝 *Hamkorlik qanday ishlaydi?*\n\n"
+            "1️⃣ Bepul maslahat — biznesni tushunib olamiz\n"
+            "2️⃣ Tahlil — raqobatchilar va auditoriyangiz\n"
+            "3️⃣ Strategiya — kontent rejasi va maqsadlar\n"
+            "4️⃣ Ijro — postlar, hikoyalar, videolar\n"
+            "5️⃣ Hisobot — har oyda natijalar tahlili\n\n"
+            "✅ Siz faqat natijaga e'tibor qilasiz!\n\n"
+            "👇 Boshlaylik:"
+        ),
+        "faq_a5": (
+            "📊 *Natijalarni qanday kuzatamiz?*\n\n"
+            "✅ Har oyda batafsil hisobot:\n"
+            "• Auditoriya o'sishi\n"
+            "• Qamrov va ko'rishlar soni\n"
+            "• Engagement (like, izoh, ulashish)\n"
+            "• Sayt yoki do'konga o'tishlar\n\n"
+            "📊 Ko'rsatkichlar asosida strategiyani moslashtiramiz.\n\n"
+            "👇 Hoziroq boshlaymiz:"
+        ),
+        "btn_back_faq": "⬅️ Savollarga qaytish",
 
         # ── portfolio (user)
         "portfolio_select_cat":  "🖼 *Portfolio*\n\nKategoriyani tanlang:",
@@ -603,18 +537,18 @@ TEXTS = {
             "🖼 Rasm: {photo}\n\n"
             "Saqlashni tasdiqlaysizmi?"
         ),
-        "adm_port_saved":      "✅ Ish portfolio'ga qo'shildi!",
-        "adm_port_cancelled":  "❌ Bekor qilindi.",
-        "adm_port_list_title": "🗂 *Portfolio'dagi barcha ishlar:*\n",
-        "adm_port_list_row":   "#{id} [{cat}] {title}\n",
-        "adm_port_empty":      "📭 Portfolio bo'sh.",
-        "adm_port_del_confirm":"🗑 *#{id} — {title}* ni o'chirishni tasdiqlaysizmi?",
-        "adm_port_deleted":    "✅ #{id} raqamli ish o'chirildi.",
-        "btn_skip":            "⏭ O'tkazib yuborish",
-        "btn_save":            "✅ Saqlash",
-        "btn_delete":          "🗑 O'chirish",
-        "btn_del_yes":         "✅ Ha, o'chirish",
-        "btn_del_no":          "❌ Bekor",
+        "adm_port_saved":       "✅ Ish portfolio'ga qo'shildi!",
+        "adm_port_cancelled":   "❌ Bekor qilindi.",
+        "adm_port_list_title":  "🗂 *Portfolio'dagi barcha ishlar:*\n",
+        "adm_port_list_row":    "#{id} [{cat}] {title}\n",
+        "adm_port_empty":       "📭 Portfolio bo'sh.",
+        "adm_port_del_confirm": "🗑 *#{id} — {title}* ni o'chirishni tasdiqlaysizmi?",
+        "adm_port_deleted":     "✅ #{id} raqamli ish o'chirildi.",
+        "btn_skip":             "⏭ O'tkazib yuborish",
+        "btn_save":             "✅ Saqlash",
+        "btn_delete":           "🗑 O'chirish",
+        "btn_del_yes":          "✅ Ha, o'chirish",
+        "btn_del_no":           "❌ Bekor",
 
         # ── channel
         "btn_channel": "📢 Bizning kanal",
@@ -624,12 +558,12 @@ TEXTS = {
 
         # ── language switch
         "btn_switch_lang": "🌐 Русский",
-        "lang_switched": "Til o'zbekchaga o'zgartirildi.",
+        "lang_switched":   "Til o'zbekchaga o'zgartirildi.",
 
         # ── my orders
-        "myorders_empty": "📭 Sizda hali arizalar yo'q. Birinchi arizani qoldiring!",
+        "myorders_empty":  "📭 Sizda hali arizalar yo'q. Birinchi arizani qoldiring!",
         "myorders_header": "📋 *Sizning arizalaringiz:*\n",
-        "myorders_row": "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
+        "myorders_row":    "{status} *#{id}* — {dtype}\n💰 {budget} | 🕐 {date}\n",
         "status_pending":  "⏳ Ko'rib chiqilmoqda",
         "status_done":     "✅ Bajarildi",
         "status_rejected": "❌ Rad etildi",
@@ -641,13 +575,13 @@ TEXTS = {
         ),
         "btn_reminder_continue": "▶️ Davom etish",
         "btn_reminder_cancel":   "❌ Arizani bekor qilish",
-        "reminder_cancelled": "Ariza bekor qilindi. Menyuga qaytaraman.",
+        "reminder_cancelled":    "Ariza bekor qilindi. Menyuga qaytaraman.",
 
         # ── free consultation
-        "btn_consult":      "📅 Bepul konsultatsiya",
-        "consult_step1":    "📅 *Bepul konsultatsiya*\n\nQulay kunni tanlang:",
-        "consult_step2":    "🕐 Qulay vaqtni tanlang:",
-        "consult_step3":    "📱 Tasdiqlash uchun *telefon raqamingizni* kiriting:",
+        "btn_consult":   "📅 Bepul konsultatsiya",
+        "consult_step1": "📅 *Bepul konsultatsiya*\n\nQulay kunni tanlang:",
+        "consult_step2": "🕐 Qulay vaqtni tanlang:",
+        "consult_step3": "📱 Tasdiqlash uchun *telefon raqamingizni* kiriting:",
         "consult_confirm": (
             "✅ *Konsultatsiya band qilindi!*\n\n"
             "📅 Kun: {day}\n"
@@ -663,11 +597,11 @@ TEXTS = {
             "🕐 Vaqt: {time}\n\n"
             "🆔 ID: `{user_id}`"
         ),
-        "consult_day_0": "Bugun",
-        "consult_day_1": "Ertaga",
-        "consult_day_2": "Indiniga",
+        "consult_day_0":     "Bugun",
+        "consult_day_1":     "Ertaga",
+        "consult_day_2":     "Indiniga",
         "booked_slot_alert": "❌ Bu vaqt allaqachon band! Boshqa vaqtni tanlang.",
-        "all_slots_booked": "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
+        "all_slots_booked":  "😔 Bu kunda barcha vaqtlar band.\nIltimos, boshqa kun tanlang.",
         "consult_t_9":  "09:00",
         "consult_t_11": "11:00",
         "consult_t_13": "13:00",

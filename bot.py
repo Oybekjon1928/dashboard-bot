@@ -45,43 +45,25 @@ if SHEETS_ENABLED:
     MAIN_MENU,
     ORDER_NAME,
     ORDER_PHONE,
-    ORDER_TYPE,
+    ORDER_SERVICE,
+    ORDER_NICHE,
+    ORDER_GOAL,
     ORDER_BUDGET,
     ORDER_CONFIRM,
-    CALC_SOURCES,
-    CALC_DEADLINE,
 ) = range(9)
 
 BROADCAST_WAIT, BROADCAST_CONFIRM = range(10, 12)
 CONSULT_TIME, CONSULT_PHONE = range(12, 14)
 PORT_CAT, PORT_PHOTO, PORT_TITLE, PORT_DESC, PORT_LINK, PORT_VIDEO, PORT_CONFIRM, PORT_DEL = range(20, 28)
 
-# ── Pricing tables ────────────────────────────────────────────────────────────
-_BASE = {
-    "type_excel":     (10, 30),
-    "type_analytics": (20, 50),
-    "type_bi":        (30, 80),
-    "type_web":       (50, 150),
-}
-_SRC_MULT = {
-    "calc_src_1_2": 1.0,
-    "calc_src_3_5": 1.3,
-    "calc_src_6":   1.7,
-}
-_DL_MULT = {
-    "calc_dl_urgent": 1.5,
-    "calc_dl_normal": 1.0,
-    "calc_dl_flex":   0.9,
-}
-
 FAQ_COUNT = 5
 
-
-def _price(type_key: str, src_key: str, dl_key: str) -> tuple[int, int]:
-    lo, hi = _BASE.get(type_key, (100, 200))
-    sm = _SRC_MULT.get(src_key, 1.0)
-    dm = _DL_MULT.get(dl_key, 1.0)
-    return round(lo * sm * dm), round(hi * sm * dm)
+PORTFOLIO_CATS = {
+    "type_smm":      "smm",
+    "type_branding": "branding",
+    "type_ads":      "ads",
+}
+PORTFOLIO_CAT_KEYS = {v: k for k, v in PORTFOLIO_CATS.items()}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -99,26 +81,30 @@ def is_admin(user_id: int) -> bool:
     return user_id == ADMIN_ID
 
 
+def _s(text) -> str:
+    """Strip markdown special chars from user-submitted text."""
+    return str(text or "—").replace("*", "").replace("_", " ").replace("`", "").replace("[", "").replace("]", "")
+
+
 def main_menu_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton(t(lang, "btn_services"),    callback_data="services"),
-            InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
-        ],
-        [
             InlineKeyboardButton(t(lang, "btn_portfolio"),   callback_data="portfolio"),
-            InlineKeyboardButton(t(lang, "btn_calc"),        callback_data="calc"),
         ],
         [
+            InlineKeyboardButton(t(lang, "btn_faq"),         callback_data="faq"),
             InlineKeyboardButton(t(lang, "btn_consult"),     callback_data="consult"),
-            InlineKeyboardButton(t(lang, "btn_order"),       callback_data="order"),
         ],
         [
+            InlineKeyboardButton(t(lang, "btn_order"),       callback_data="order"),
             InlineKeyboardButton(t(lang, "btn_myorders"),    callback_data="myorders"),
-            InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
         ],
         [
             InlineKeyboardButton(t(lang, "btn_contacts"),    callback_data="contacts"),
+            InlineKeyboardButton(t(lang, "btn_channel"),     url=CHANNEL_URL),
+        ],
+        [
             InlineKeyboardButton(t(lang, "btn_switch_lang"), callback_data="switch_lang"),
         ],
     ])
@@ -130,6 +116,24 @@ def back_to_menu_keyboard(lang: str, include_order: bool = True) -> InlineKeyboa
         rows.append([InlineKeyboardButton(t(lang, "btn_order"), callback_data="order")])
     rows.append([InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")])
     return InlineKeyboardMarkup(rows)
+
+
+def _service_keyboard(lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(t(lang, "type_smm"),      callback_data="type_smm")],
+        [InlineKeyboardButton(t(lang, "type_branding"), callback_data="type_branding")],
+        [InlineKeyboardButton(t(lang, "type_both"),     callback_data="type_both")],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
+    ])
+
+
+def _goal_keyboard(lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(t(lang, "goal_followers"), callback_data="goal_followers")],
+        [InlineKeyboardButton(t(lang, "goal_sales"),     callback_data="goal_sales")],
+        [InlineKeyboardButton(t(lang, "goal_awareness"), callback_data="goal_awareness")],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"),  callback_data="main_menu")],
+    ])
 
 
 # ── /start ────────────────────────────────────────────────────────────────────
@@ -151,7 +155,8 @@ async def lang_selected(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     user = query.from_user
     upsert_user(user.id, user.username, lang)
     await query.edit_message_text(
-        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang)
+        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+        parse_mode=ParseMode.MARKDOWN,
     )
     return MAIN_MENU
 
@@ -162,7 +167,10 @@ async def show_main_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    await query.edit_message_text(t(lang, "welcome"), reply_markup=main_menu_keyboard(lang))
+    await query.edit_message_text(
+        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+        parse_mode=ParseMode.MARKDOWN,
+    )
     return MAIN_MENU
 
 
@@ -191,26 +199,18 @@ async def show_contacts(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return MAIN_MENU
 
 
-PORTFOLIO_CATS = {
-    "type_excel":     "excel",
-    "type_bi":        "bi",
-    "type_web":       "web",
-    "type_analytics": "analytics",
-}
-PORTFOLIO_CAT_KEYS = {v: k for k, v in PORTFOLIO_CATS.items()}
-
+# ── Portfolio ─────────────────────────────────────────────────────────────────
 
 def _portfolio_cat_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "type_excel"),     callback_data="pcat_excel_0"),
-            InlineKeyboardButton(t(lang, "type_bi"),        callback_data="pcat_bi_0"),
+            InlineKeyboardButton(t(lang, "type_smm"),      callback_data="pcat_smm_0"),
+            InlineKeyboardButton(t(lang, "type_branding"), callback_data="pcat_branding_0"),
         ],
         [
-            InlineKeyboardButton(t(lang, "type_web"),       callback_data="pcat_web_0"),
-            InlineKeyboardButton(t(lang, "type_analytics"), callback_data="pcat_analytics_0"),
+            InlineKeyboardButton(t(lang, "type_ads"),      callback_data="pcat_ads_0"),
         ],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),     callback_data="main_menu")],
+        [InlineKeyboardButton(t(lang, "btn_main_menu"),    callback_data="main_menu")],
     ])
 
 
@@ -248,7 +248,6 @@ async def show_portfolio_items(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
     await query.answer()
     lang = get_lang(ctx)
 
-    # callback_data: "pcat_excel_2"
     parts = query.data.split("_")
     cat   = parts[1]
     idx   = int(parts[2])
@@ -308,12 +307,11 @@ async def adm_port_add_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
     ctx.user_data["new_port"] = {}
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(t(lang, "type_excel"),     callback_data="apc_excel"),
-            InlineKeyboardButton(t(lang, "type_bi"),        callback_data="apc_bi"),
+            InlineKeyboardButton(t(lang, "type_smm"),      callback_data="apc_smm"),
+            InlineKeyboardButton(t(lang, "type_branding"), callback_data="apc_branding"),
         ],
         [
-            InlineKeyboardButton(t(lang, "type_web"),       callback_data="apc_web"),
-            InlineKeyboardButton(t(lang, "type_analytics"), callback_data="apc_analytics"),
+            InlineKeyboardButton(t(lang, "type_ads"),      callback_data="apc_ads"),
         ],
     ])
     await update.message.reply_text(
@@ -328,7 +326,7 @@ async def adm_port_got_cat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    ctx.user_data["new_port"]["category"] = query.data[4:]  # "apc_excel" → "excel"
+    ctx.user_data["new_port"]["category"] = query.data[4:]  # "apc_smm" → "smm"
     await query.edit_message_text(
         t(lang, "adm_port_step_photo"),
         parse_mode=ParseMode.MARKDOWN,
@@ -433,7 +431,7 @@ async def adm_port_got_video(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
     lang = get_lang(ctx)
     ctx.user_data["new_port"]["video_url"] = update.message.text.strip()
     await update.message.reply_text("⏳")
-    msg = await update.message.get_bot().send_message(
+    await update.message.get_bot().send_message(
         chat_id=update.effective_chat.id,
         text=_port_preview_text(ctx, lang),
         parse_mode=ParseMode.MARKDOWN,
@@ -453,7 +451,7 @@ async def _adm_port_show_preview(query, ctx, lang: str) -> int:
 
 def _port_preview_text(ctx, lang: str) -> str:
     p = ctx.user_data.get("new_port", {})
-    cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(p.get("category", ""), "type_excel"))
+    cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(p.get("category", ""), "type_smm"))
     return t(lang, "adm_port_preview",
         cat=cat_label,
         title=p.get("title", "—"),
@@ -477,7 +475,7 @@ async def adm_port_save(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     p = ctx.user_data.get("new_port", {})
     add_portfolio_item(
-        category=p.get("category", "excel"),
+        category=p.get("category", "smm"),
         title=p.get("title", ""),
         description=p.get("description", ""),
         file_id=p.get("file_id", ""),
@@ -500,7 +498,6 @@ async def adm_port_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     return ConversationHandler.END
 
 
-# Delete portfolio
 async def adm_port_delete_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_admin(update.effective_user.id):
         return ConversationHandler.END
@@ -512,7 +509,7 @@ async def adm_port_delete_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) 
 
     lines = [t(lang, "adm_port_list_title")]
     for item in items:
-        cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(item["category"], "type_excel"))
+        cat_label = t(lang, PORTFOLIO_CAT_KEYS.get(item["category"], "type_smm"))
         lines.append(t(lang, "adm_port_list_row",
             id=item["id"], cat=cat_label, title=item["title"]))
 
@@ -573,7 +570,7 @@ async def adm_port_del_confirm(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -
     return ConversationHandler.END
 
 
-# ── Language switch ──────────────────────────────────────────────────────────
+# ── Language switch ───────────────────────────────────────────────────────────
 
 async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
@@ -581,7 +578,10 @@ async def switch_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = "uz" if get_lang(ctx) == "ru" else "ru"
     ctx.user_data["lang"] = lang
     upsert_user(query.from_user.id, query.from_user.username, lang)
-    await query.edit_message_text(t(lang, "welcome"), reply_markup=main_menu_keyboard(lang))
+    await query.edit_message_text(
+        t(lang, "welcome"), reply_markup=main_menu_keyboard(lang),
+        parse_mode=ParseMode.MARKDOWN,
+    )
     return MAIN_MENU
 
 
@@ -737,9 +737,7 @@ async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     ctx.user_data["consult"]["day"]      = _day_label(lang, day_index)
     ctx.user_data["consult"]["date_str"] = date_str
 
-    keyboard = _time_keyboard(lang, date_str)
     booked_count = len(get_booked_times(date_str))
-
     if booked_count == len(_CONSULT_TIMES):
         await query.edit_message_text(
             t(lang, "all_slots_booked"),
@@ -752,7 +750,7 @@ async def consult_got_day(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     await query.edit_message_text(
         t(lang, "consult_step2"),
         parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
+        reply_markup=_time_keyboard(lang, date_str),
     )
     return CONSULT_PHONE
 
@@ -772,7 +770,6 @@ async def consult_got_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     time_key = query.data.split("_")[1]
     slot     = {"9": "09:00", "11": "11:00", "13": "13:00", "15": "15:00", "17": "17:00"}.get(time_key, "")
 
-    # Double-check slot is still free
     if slot in get_booked_times(date_str):
         await query.answer(t(lang, "booked_slot_alert"), show_alert=True)
         await query.edit_message_reply_markup(reply_markup=_time_keyboard(lang, date_str))
@@ -797,7 +794,7 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         username=user.username,
         first_name=user.first_name,
         phone=phone,
-        day=consult.get("date_str", consult.get("day", "—")),  # store actual date for booking
+        day=consult.get("date_str", consult.get("day", "—")),
         time=consult.get("time", "—"),
     )
 
@@ -817,7 +814,6 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     except Exception as e:
         logger.error("Consult admin notify failed: %s", e)
 
-    # Schedule 15-min repeat reminder to admin
     if ctx.job_queue:
         ctx.job_queue.run_once(
             _remind_admin_consult,
@@ -837,7 +833,7 @@ async def consult_got_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
           day=consult.get("day", "—"),
           time=consult.get("time", "—"),
           phone=phone,
-          admin_username=ADMIN_USERNAME.replace("_", "\\_")),
+          admin_username=ADMIN_USERNAME.replace("_", "\\\_")),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")
@@ -874,111 +870,13 @@ async def show_faq_answer(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    n = query.data.split("_")[1]  # "faq_3" → "3"
+    n = query.data.split("_")[1]
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(t(lang, "btn_back_faq"), callback_data="faq")],
         [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
     ])
     await query.edit_message_text(
         t(lang, f"faq_a{n}"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
-    )
-    return MAIN_MENU
-
-
-# ── Pricing calculator ────────────────────────────────────────────────────────
-
-def _type_keyboard(prefix: str, lang: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(t(lang, "type_bi"),        callback_data=f"{prefix}type_bi"),
-            InlineKeyboardButton(t(lang, "type_web"),       callback_data=f"{prefix}type_web"),
-        ],
-        [
-            InlineKeyboardButton(t(lang, "type_excel"),     callback_data=f"{prefix}type_excel"),
-            InlineKeyboardButton(t(lang, "type_analytics"), callback_data=f"{prefix}type_analytics"),
-        ],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),     callback_data="main_menu")],
-    ])
-
-
-async def calc_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["calc"] = {}
-    await query.edit_message_text(
-        t(lang, "calc_step1"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_type_keyboard("calc_", lang),
-    )
-    return CALC_SOURCES
-
-
-async def calc_got_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    # callback_data is "calc_type_bi" → strip "calc_" prefix to get type key
-    ctx.user_data["calc"]["type_key"] = query.data[5:]  # "type_bi"
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "calc_src_1_2"), callback_data="calc_src_1_2")],
-        [InlineKeyboardButton(t(lang, "calc_src_3_5"), callback_data="calc_src_3_5")],
-        [InlineKeyboardButton(t(lang, "calc_src_6"),   callback_data="calc_src_6")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"), callback_data="main_menu")],
-    ])
-    await query.edit_message_text(
-        t(lang, "calc_step2"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
-    )
-    return CALC_DEADLINE
-
-
-async def calc_got_sources(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    ctx.user_data["calc"]["src_key"] = query.data  # "calc_src_3_5"
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "calc_dl_urgent"), callback_data="calc_dl_urgent")],
-        [InlineKeyboardButton(t(lang, "calc_dl_normal"), callback_data="calc_dl_normal")],
-        [InlineKeyboardButton(t(lang, "calc_dl_flex"),   callback_data="calc_dl_flex")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),  callback_data="main_menu")],
-    ])
-    await query.edit_message_text(
-        t(lang, "calc_step3"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=keyboard,
-    )
-    return MAIN_MENU
-
-
-async def calc_got_deadline(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    calc = ctx.user_data.get("calc", {})
-    type_key = calc.get("type_key", "type_analytics")
-    src_key  = calc.get("src_key",  "calc_src_1_2")
-    dl_key   = query.data
-
-    lo, hi = _price(type_key, src_key, dl_key)
-
-    dtype    = t(lang, type_key)
-    sources  = t(lang, src_key.replace("calc_", "calc_"))
-    deadline = t(lang, dl_key.replace("calc_", "calc_"))
-
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(t(lang, "btn_calc_order"), callback_data="order")],
-        [InlineKeyboardButton(t(lang, "btn_recalc"),     callback_data="calc")],
-        [InlineKeyboardButton(t(lang, "btn_main_menu"),  callback_data="main_menu")],
-    ])
-    await query.edit_message_text(
-        t(lang, "calc_result",
-          dtype=dtype, sources=sources, deadline=deadline,
-          min_p=lo, max_p=hi),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=keyboard,
     )
@@ -993,7 +891,6 @@ async def order_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     ctx.user_data["order"] = {}
 
-    # Schedule 1-hour reminder
     user_id = query.from_user.id
     _cancel_reminder(ctx, user_id)
     if ctx.job_queue:
@@ -1019,18 +916,38 @@ async def order_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     ctx.user_data["order"]["phone"] = update.message.text.strip()
     await update.message.reply_text(
-        t(lang, "order_type"),
+        t(lang, "order_service"),
         parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_type_keyboard("", lang),
+        reply_markup=_service_keyboard(lang),
     )
-    return ORDER_TYPE
+    return ORDER_SERVICE
 
 
-async def order_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+async def order_service(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     lang = get_lang(ctx)
-    ctx.user_data["order"]["dtype"] = t(lang, query.data)
+    ctx.user_data["order"]["dtype"] = t(lang, query.data)  # e.g. "type_smm"
+    await query.edit_message_text(t(lang, "order_niche"), parse_mode=ParseMode.MARKDOWN)
+    return ORDER_NICHE
+
+
+async def order_niche(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    lang = get_lang(ctx)
+    ctx.user_data["order"]["niche"] = update.message.text.strip()
+    await update.message.reply_text(
+        t(lang, "order_goal"),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=_goal_keyboard(lang),
+    )
+    return ORDER_GOAL
+
+
+async def order_goal(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    lang = get_lang(ctx)
+    ctx.user_data["order"]["goal"] = t(lang, query.data)  # e.g. "goal_sales"
     await query.edit_message_text(t(lang, "order_budget"), parse_mode=ParseMode.MARKDOWN)
     return ORDER_BUDGET
 
@@ -1038,10 +955,16 @@ async def order_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 async def order_budget(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     lang = get_lang(ctx)
     ctx.user_data["order"]["budget"] = update.message.text.strip()
-    ctx.user_data["order"]["desc"] = ""
     order = ctx.user_data["order"]
     await update.message.reply_text(
-        t(lang, "order_confirm", **order),
+        t(lang, "order_confirm",
+          name=_s(order.get("name", "")),
+          phone=_s(order.get("phone", "")),
+          dtype=order.get("dtype", ""),
+          niche=_s(order.get("niche", "")),
+          goal=order.get("goal", ""),
+          budget=_s(order.get("budget", "")),
+        ),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="confirm_yes"),
@@ -1058,6 +981,8 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     order = ctx.user_data.get("order", {})
     user  = query.from_user
 
+    description = f"{order.get('niche', '')} | {order.get('goal', '')}"
+
     order_id = save_order(
         user_id=user.id,
         username=user.username,
@@ -1065,7 +990,7 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         phone=order.get("phone", ""),
         dtype=order.get("dtype", ""),
         budget=order.get("budget", ""),
-        description=order.get("desc", ""),
+        description=description,
     )
 
     if SHEETS_ENABLED:
@@ -1075,7 +1000,7 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
             phone=order.get("phone", ""),
             dtype=order.get("dtype", ""),
             budget=order.get("budget", ""),
-            description=order.get("desc", ""),
+            description=description,
             user_id=user.id,
             username=user.username,
         )
@@ -1085,8 +1010,9 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
         name=order.get("name", "—"),
         phone=order.get("phone", "—"),
         dtype=order.get("dtype", "—"),
+        niche=order.get("niche", "—"),
+        goal=order.get("goal", "—"),
         budget=order.get("budget", "—"),
-        desc=order.get("desc", "—"),
         user_id=user.id,
         username=user.username or "—",
     )
@@ -1097,7 +1023,6 @@ async def order_confirm_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> i
     except Exception as e:
         logger.error("Admin notification failed: %s", e)
 
-    # Schedule 15-min repeat reminder to admin
     if ctx.job_queue:
         ctx.job_queue.run_once(
             _remind_admin_order,
@@ -1130,7 +1055,7 @@ async def order_confirm_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> in
     return MAIN_MENU
 
 
-# ── Admin order/consult reminder jobs ────────────────────────────────────────
+# ── Admin order/consult reminder jobs ─────────────────────────────────────────
 
 async def _remind_admin_order(ctx: ContextTypes.DEFAULT_TYPE) -> None:
     data     = ctx.job.data
@@ -1179,7 +1104,6 @@ async def admin_accept_order(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(t("uz", "admin_accept_404", id=order_id))
         return
     await update.message.reply_text(t("uz", "admin_accepted", id=order_id))
-    # Notify user
     try:
         await ctx.bot.send_message(
             chat_id=order["user_id"],
@@ -1212,12 +1136,12 @@ async def admin_done(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         return
     if not ctx.args:
-        await update.message.reply_text("Использование: `/done <order_id>`", parse_mode=ParseMode.MARKDOWN)
+        await update.message.reply_text("Ishlatish: `/done <order_id>`", parse_mode=ParseMode.MARKDOWN)
         return
     order_id = int(ctx.args[0])
     order = get_order(order_id)
     if not order:
-        await update.message.reply_text(f"Заявка #{order_id} не найдена.")
+        await update.message.reply_text(f"Buyurtma #{order_id} topilmadi.")
         return
     set_order_status(order_id, "done")
     if SHEETS_ENABLED:
@@ -1226,27 +1150,27 @@ async def admin_done(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await ctx.bot.send_message(
             chat_id=order["user_id"],
             text=(
-                f"✅ Ваш заказ *\\#{order_id}* выполнен\\! "
-                f"Спасибо за доверие\\. Свяжитесь с нами: @{ADMIN_USERNAME}"
+                f"✅ Sizning buyurtmangiz *\\#{order_id}* bajarildi\\!\n"
+                f"Ishonch uchun rahmat\\. Bog'lanish: @{ADMIN_USERNAME}"
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
     except Exception as e:
         logger.warning("Could not notify user: %s", e)
-    await update.message.reply_text(f"✅ Заявка #{order_id} выполнена.")
+    await update.message.reply_text(f"✅ Buyurtma #{order_id} bajarildi.")
 
 
 async def admin_reject(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         return
     if not ctx.args:
-        await update.message.reply_text("Использование: `/reject <order_id> [причина]`", parse_mode=ParseMode.MARKDOWN)
+        await update.message.reply_text("Ishlatish: `/reject <order_id> [sabab]`", parse_mode=ParseMode.MARKDOWN)
         return
     order_id = int(ctx.args[0])
-    reason   = " ".join(ctx.args[1:]) if len(ctx.args) > 1 else "Не указана"
+    reason   = " ".join(ctx.args[1:]) if len(ctx.args) > 1 else "Ko'rsatilmagan"
     order = get_order(order_id)
     if not order:
-        await update.message.reply_text(f"Заявка #{order_id} не найдена.")
+        await update.message.reply_text(f"Buyurtma #{order_id} topilmadi.")
         return
     set_order_status(order_id, "rejected")
     if SHEETS_ENABLED:
@@ -1256,20 +1180,15 @@ async def admin_reject(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await ctx.bot.send_message(
             chat_id=order["user_id"],
             text=(
-                f"❌ По заявке *\\#{order_id}* мы вынуждены отказать\\.\n"
-                f"Причина: {esc(reason)}\n\n"
-                f"Если есть вопросы — @{ADMIN_USERNAME}"
+                f"❌ *\\#{order_id}* raqamli ariza bo'yicha rad etishga majburmiz\\.\n"
+                f"Sabab: {esc(reason)}\n\n"
+                f"Savollar bo'lsa — @{ADMIN_USERNAME}"
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
     except Exception as e:
         logger.warning("Could not notify user: %s", e)
-    await update.message.reply_text(f"❌ Заявка #{order_id} отклонена.")
-
-
-def _s(text) -> str:
-    """Strip markdown special chars from user-submitted text."""
-    return str(text or "—").replace("*", "").replace("_", " ").replace("`", "").replace("[", "").replace("]", "")
+    await update.message.reply_text(f"❌ Buyurtma #{order_id} rad etildi.")
 
 
 async def admin_orders(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1320,7 +1239,7 @@ async def broadcast_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int
         return ConversationHandler.END
     count = user_count()
     await update.message.reply_text(
-        f"📢 *Рассылка*\n\nПользователей в базе: *{count}*\n\nНапишите сообщение:",
+        f"📢 *Xabar yuborish*\n\nFoydalanuvchilar: *{count}*\n\nXabar matnini yozing:",
         parse_mode=ParseMode.MARKDOWN,
     )
     return BROADCAST_WAIT
@@ -1330,11 +1249,11 @@ async def broadcast_got_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) 
     ctx.user_data["broadcast_text"] = update.message.text
     count = user_count()
     keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ Отправить", callback_data="bc_yes"),
-        InlineKeyboardButton("❌ Отмена",    callback_data="bc_no"),
+        InlineKeyboardButton("✅ Yuborish", callback_data="bc_yes"),
+        InlineKeyboardButton("❌ Bekor",   callback_data="bc_no"),
     ]])
     await update.message.reply_text(
-        f"📢 Сообщение для *{count}* пользователей:\n\n———\n{update.message.text}\n———\n\nПодтвердить?",
+        f"📢 *{count}* foydalanuvchiga xabar:\n\n———\n{update.message.text}\n———\n\nTasdiqlaysizmi?",
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=keyboard,
     )
@@ -1346,7 +1265,7 @@ async def broadcast_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.answer()
     text     = ctx.user_data.get("broadcast_text", "")
     user_ids = all_user_ids()
-    await query.edit_message_text(f"📤 Отправляю {len(user_ids)} пользователям...")
+    await query.edit_message_text(f"📤 {len(user_ids)} foydalanuvchiga yuborilmoqda...")
     sent = failed = 0
     for uid in user_ids:
         try:
@@ -1354,14 +1273,14 @@ async def broadcast_yes(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             sent += 1
         except Exception:
             failed += 1
-    await query.message.reply_text(f"✅ Готово. Отправлено: {sent} | Ошибок: {failed}")
+    await query.message.reply_text(f"✅ Tayyor. Yuborildi: {sent} | Xato: {failed}")
     return ConversationHandler.END
 
 
 async def broadcast_no(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text("❌ Рассылка отменена.")
+    await query.edit_message_text("❌ Xabar yuborish bekor qilindi.")
     return ConversationHandler.END
 
 
@@ -1404,28 +1323,18 @@ def main() -> None:
                 CallbackQueryHandler(lang_selected, pattern="^lang_(ru|uz)$"),
             ],
             MAIN_MENU: [
-                CallbackQueryHandler(show_main_menu,    pattern="^main_menu$"),
-                CallbackQueryHandler(show_services,     pattern="^services$"),
-                CallbackQueryHandler(show_portfolio,         pattern="^portfolio$"),
-                CallbackQueryHandler(show_portfolio_items,   pattern="^pcat_"),
-                CallbackQueryHandler(show_contacts,     pattern="^contacts$"),
-                CallbackQueryHandler(show_faq,          pattern="^faq$"),
-                CallbackQueryHandler(show_faq_answer,   pattern="^faq_[1-5]$"),
-                CallbackQueryHandler(calc_start,        pattern="^calc$"),
-                CallbackQueryHandler(order_start,       pattern="^order$"),
-                CallbackQueryHandler(consult_start,       pattern="^consult$"),
-                CallbackQueryHandler(switch_lang,         pattern="^switch_lang$"),
-                CallbackQueryHandler(my_orders_callback,  pattern="^myorders$"),
+                CallbackQueryHandler(show_main_menu,       pattern="^main_menu$"),
+                CallbackQueryHandler(show_services,        pattern="^services$"),
+                CallbackQueryHandler(show_portfolio,       pattern="^portfolio$"),
+                CallbackQueryHandler(show_portfolio_items, pattern="^pcat_"),
+                CallbackQueryHandler(show_contacts,        pattern="^contacts$"),
+                CallbackQueryHandler(show_faq,             pattern="^faq$"),
+                CallbackQueryHandler(show_faq_answer,      pattern="^faq_[1-5]$"),
+                CallbackQueryHandler(order_start,          pattern="^order$"),
+                CallbackQueryHandler(consult_start,        pattern="^consult$"),
+                CallbackQueryHandler(switch_lang,          pattern="^switch_lang$"),
+                CallbackQueryHandler(my_orders_callback,   pattern="^myorders$"),
                 CallbackQueryHandler(lambda u, c: u.callback_query.answer(), pattern="^noop$"),
-                CallbackQueryHandler(calc_got_deadline, pattern="^calc_dl_"),
-            ],
-            CALC_SOURCES: [
-                CallbackQueryHandler(calc_got_type,    pattern="^calc_type_"),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
-            ],
-            CALC_DEADLINE: [
-                CallbackQueryHandler(calc_got_sources, pattern="^calc_src_"),
-                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
             ],
             ORDER_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, order_name),
@@ -1433,8 +1342,15 @@ def main() -> None:
             ORDER_PHONE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, order_phone),
             ],
-            ORDER_TYPE: [
-                CallbackQueryHandler(order_type,       pattern="^type_"),
+            ORDER_SERVICE: [
+                CallbackQueryHandler(order_service,    pattern="^type_"),
+                CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
+            ],
+            ORDER_NICHE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, order_niche),
+            ],
+            ORDER_GOAL: [
+                CallbackQueryHandler(order_goal,       pattern="^goal_"),
                 CallbackQueryHandler(show_main_menu,   pattern="^main_menu$"),
             ],
             ORDER_BUDGET: [
@@ -1457,7 +1373,7 @@ def main() -> None:
         },
         fallbacks=[
             CommandHandler("start", start),
-            CallbackQueryHandler(reminder_cancel, pattern="^reminder_cancel$"),
+            CallbackQueryHandler(reminder_cancel,   pattern="^reminder_cancel$"),
             CallbackQueryHandler(reminder_continue, pattern="^reminder_continue$"),
             MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
         ],
@@ -1472,7 +1388,7 @@ def main() -> None:
     app.add_handler(CommandHandler("accept",        admin_accept_order))
     app.add_handler(CommandHandler("acceptc",       admin_accept_consult))
     app.add_handler(CommandHandler("myorders",      my_orders))
-    # Admin: add portfolio
+
     add_port_conv = ConversationHandler(
         entry_points=[CommandHandler("addportfolio", adm_port_add_start)],
         states={
@@ -1503,7 +1419,6 @@ def main() -> None:
         per_message=False,
     )
 
-    # Admin: delete portfolio
     del_port_conv = ConversationHandler(
         entry_points=[CommandHandler("deleteportfolio", adm_port_delete_start)],
         states={
@@ -1521,7 +1436,7 @@ def main() -> None:
     app.add_handler(del_port_conv)
     app.add_handler(user_conv)
 
-    logger.info("Bot started. Sheets: %s", "enabled" if SHEETS_ENABLED else "disabled")
+    logger.info("Markenti bot started. Sheets: %s", "enabled" if SHEETS_ENABLED else "disabled")
     asyncio.run(_run(app))
 
 
