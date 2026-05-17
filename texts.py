@@ -151,9 +151,9 @@ TEXTS = {
             "strategiyalar yaratishga yordam beraman. Frilanser loyihalar va doimiy "
             "hamkorlikka tayyorman.\n\n"
             "📊 *Mutaxassisligim:*\n"
-            "• Iste'molchi xulqini tahlil qilish\n"
-            "• Brend pozitsioneri va strategiya\n"
-            "• SMM va kontent boshqaruvi\n\n"
+            "• Consumer Behaviour\n"
+            "• Brand Strategy\n"
+            "• SMM Manager\n\n"
             "📩 Yozing — loyihangizni muhokama qilamiz!"
         ),
 
