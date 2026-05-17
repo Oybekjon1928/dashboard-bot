@@ -27,9 +27,9 @@ TEXTS = {
             "Специалист по *Consumer Behaviour & Brand Strategy*.\n\n"
             "Помогаю брендам понять свою аудиторию и выстроить стратегии, "
             "которые конвертируют. Открыт к фриланс-проектам и постоянному сотрудничеству.\n\n"
-            "▸ Consumer Behaviour\n"
-            "▸ Brand Strategy\n"
-            "▸ SMM Manager\n\n"
+            "▸ Consumer Behaviour Analysis\n"
+            "▸ Brand Positioning & Strategy\n"
+            "▸ SMM & Content Management\n\n"
             "✉️ _Напишите мне — обсудим ваш проект!_"
         ),
 
@@ -149,9 +149,9 @@ TEXTS = {
             "Brendlarga o'z auditoriyasini tushunishga va konversiyaga aylantiruvchi "
             "strategiyalar yaratishga yordam beraman. Frilanser loyihalar va doimiy "
             "hamkorlikka tayyorman.\n\n"
-            "▸ Consumer Behaviour\n"
-            "▸ Brand Strategy\n"
-            "▸ SMM Manager\n\n"
+            "▸ Consumer Behaviour Analysis\n"
+            "▸ Brand Positioning & Strategy\n"
+            "▸ SMM & Content Management\n\n"
             "✉️ _Yozing — loyihangizni muhokama qilamiz!_"
         ),
 
