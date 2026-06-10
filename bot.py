@@ -276,6 +276,15 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         ctx.user_data["mode"] = "await_confirm"
         await _show_preview(update.message.chat_id, ctx, lang)
 
+    else:
+        # mode is "idle" — bot may have restarted and lost state
+        msg = (
+            "⚠️ Seans tugadi\\. Iltimos /start dan qayta boshlang\\."
+            if lang == "uz"
+            else "⚠️ Сессия сброшена\\. Пожалуйста, начните заново с /start\\."
+        )
+        await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+
 
 # ── Callback handler ──────────────────────────────────────────────────────────
 
