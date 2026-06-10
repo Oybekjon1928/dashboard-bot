@@ -210,12 +210,14 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def lang_picked(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+async def lang_picked(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     ctx.user_data["lang"] = "uz" if query.data == "setlang_uz" else "ru"
-    await query.edit_message_text("✅")
-    await _send_panel(query.message, ctx)
+    lang = ctx.user_data["lang"]
+    ctx.user_data["setup"] = {}
+    await query.edit_message_text(t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN)
+    return SETUP_MSG
 
 
 async def _send_panel(message, ctx) -> None:
@@ -370,8 +372,20 @@ async def setup_freq_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         await query.edit_message_text(t(lang, "freq_custom_ask"))
         return SETUP_FREQ_CUSTOM
     ctx.user_data["setup"]["freq"] = int(query.data.split("_")[1])
-    await query.edit_message_text("⏳")
-    return await _show_preview(query.message, ctx)
+    await query.edit_message_text(t(lang, "setup_step3"))
+    s        = ctx.user_data["setup"]
+    freq     = s["freq"]
+    interval = round(60 / freq, 1)
+    await ctx.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=t(lang, "preview", chat=s["chat_id"], freq=freq, interval=interval, text=s["text"]),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="setup_confirm"),
+            InlineKeyboardButton(t(lang, "btn_cancel"),  callback_data="setup_cancel"),
+        ]]),
+    )
+    return SETUP_CONFIRM
 
 
 async def setup_freq_custom(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
@@ -485,7 +499,8 @@ def main() -> None:
     setup_conv = ConversationHandler(
         entry_points=[
             CommandHandler("setup", setup_start),
-            CallbackQueryHandler(setup_start, pattern="^panel_setup$"),
+            CallbackQueryHandler(setup_start,  pattern="^panel_setup$"),
+            CallbackQueryHandler(lang_picked,   pattern="^setlang_"),
         ],
         states={
             SETUP_MSG:         [MessageHandler(filters.TEXT & ~filters.COMMAND, setup_got_msg)],
@@ -499,11 +514,11 @@ def main() -> None:
         },
         fallbacks=[CommandHandler("cancel", setup_cancel)],
         per_message=False,
+        allow_reentry=True,
     )
 
     app.add_handler(CommandHandler("start",  cmd_start))
     app.add_handler(CommandHandler("chatid", cmd_chatid))
-    app.add_handler(CallbackQueryHandler(lang_picked, pattern="^setlang_"))
     app.add_handler(setup_conv)
     app.add_handler(CallbackQueryHandler(panel_btn, pattern="^panel_"))
 
