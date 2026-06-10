@@ -240,7 +240,7 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text or ""
 
     if mode == "await_msg":
-        ctx.user_data["setup"]["text"] = text
+        ctx.user_data.setdefault("setup", {})["text"] = text
         ctx.user_data["mode"] = "await_chat"
         await update.message.reply_text(t(lang, "step2"), parse_mode=ParseMode.MARKDOWN)
 
@@ -251,7 +251,7 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         if not raw.startswith("@") and not raw.lstrip("-").isdigit():
             await update.message.reply_text(t(lang, "chat_invalid"), parse_mode=ParseMode.MARKDOWN)
             return
-        ctx.user_data["setup"]["chat_id"] = raw
+        ctx.user_data.setdefault("setup", {})["chat_id"] = raw
         ctx.user_data["mode"] = "await_freq"
         await update.message.reply_text(
             t(lang, "step3"),
@@ -267,7 +267,7 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         except ValueError:
             await update.message.reply_text(t(lang, "freq_invalid"))
             return
-        ctx.user_data["setup"]["freq"] = freq
+        ctx.user_data.setdefault("setup", {})["freq"] = freq
         ctx.user_data["mode"] = "await_confirm"
         await _show_preview(update.message.chat_id, ctx, lang)
 
@@ -298,7 +298,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             await query.edit_message_text(t(lang, "freq_custom_ask"))
         else:
             freq = int(data.split("_")[1])
-            ctx.user_data["setup"]["freq"] = freq
+            ctx.user_data.setdefault("setup", {})["freq"] = freq
             ctx.user_data["mode"] = "await_confirm"
             await query.edit_message_text(t(lang, "step3"))
             await _show_preview(query.message.chat_id, ctx, lang)
