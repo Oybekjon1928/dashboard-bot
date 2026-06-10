@@ -8,7 +8,6 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
-    ConversationHandler,
     ContextTypes,
     PicklePersistence,
     filters,
@@ -22,16 +21,14 @@ from config import BOT_TOKEN, ADMIN_ID, TG_API_ID, TG_API_HASH, TG_SESSION
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SETUP_MSG, SETUP_CHAT, SETUP_FREQ, SETUP_FREQ_CUSTOM, SETUP_CONFIRM = range(5)
-
-tg_client: TelegramClient = None  # type: ignore  — initialized in _run()
+tg_client: TelegramClient = None  # type: ignore
 
 # ── Texts ─────────────────────────────────────────────────────────────────────
 
 TEXTS = {
     "ru": {
         "not_admin":       "🚛 Cargo Bot",
-        "not_configured":  "🚛 *Cargo Auto-Poster*\n\nЕщё не настроено. Используйте /setup.",
+        "not_configured":  "🚛 *Cargo Auto-Poster*\n\nЕщё не настроено.\nНажмите /setup чтобы настроить.",
         "panel_header":    "🚛 *Cargo Auto-Poster*",
         "status_label":    "📡 Статус",
         "running":         "🟢 Работает",
@@ -48,26 +45,21 @@ TEXTS = {
         "started":         "✅ Рассылка запущена!",
         "stopped_msg":     "⏹ Рассылка остановлена.",
         "no_settings":     "⚠️ Сначала настройте /setup",
-        "setup_step1": (
-            "⚙️ *Настройка авторассылки*\n\n"
-            "📝 *Шаг 1 / 3*\n\n"
-            "Отправьте текст объявления:"
-        ),
-        "setup_step2": (
+        "step1":           "📝 *Шаг 1 / 3*\n\nОтправьте текст объявления:",
+        "step2": (
             "📍 *Шаг 2 / 3*\n\n"
-            "Укажите *название или ID* группы/канала.\n\n"
-            "Варианты:\n"
-            "• Username канала: `@mygroup`\n"
-            "• Числовой ID: `-1001234567890`\n\n"
-            "_Вы должны быть участником этой группы/канала_"
+            "Укажите username или ID группы/канала.\n\n"
+            "• Username: `@mygroup`\n"
+            "• ID: `-1001234567890`\n\n"
+            "_Вы должны быть участником этой группы_"
         ),
-        "setup_step3":     "⏱ *Шаг 3 / 3*\n\nСколько раз в минуту отправлять?",
+        "step3":           "⏱ *Шаг 3 / 3*\n\nСколько раз в минуту отправлять?",
         "freq_1":          "1 раз/мин",
         "freq_2":          "2 раза/мин",
         "freq_3":          "3 раза/мин",
         "freq_4":          "4 раза/мин",
         "freq_custom_btn": "✏️ Другое число",
-        "freq_custom_ask": "✏️ Введите число раз в минуту (1 – 60):",
+        "freq_custom_ask": "✏️ Введите число раз в минуту (1–60):",
         "freq_invalid":    "❌ Введите целое число от 1 до 60.",
         "preview": (
             "👁 *Предпросмотр:*\n\n"
@@ -80,10 +72,11 @@ TEXTS = {
         "cancelled":       "❌ Настройка отменена.",
         "chat_invalid":    "❌ Неверный формат.\nВведите @username или числовой ID.",
         "lang_select":     "🌐 Выберите язык / Tilni tanlang:",
+        "setup_done":      "✅ *Рассылка запущена!*",
     },
     "uz": {
         "not_admin":       "🚛 Yuk Boti",
-        "not_configured":  "🚛 *Yuk Avto-Jo'natuvchi*\n\nHali sozlanmagan. /setup dan foydalaning.",
+        "not_configured":  "🚛 *Yuk Avto-Jo'natuvchi*\n\nHali sozlanmagan.\n/setup buyrug'ini yuboring.",
         "panel_header":    "🚛 *Yuk Avto-Jo'natuvchi*",
         "status_label":    "📡 Holat",
         "running":         "🟢 Ishlaydi",
@@ -100,26 +93,21 @@ TEXTS = {
         "started":         "✅ Yuborish boshlandi!",
         "stopped_msg":     "⏹ Yuborish to'xtatildi.",
         "no_settings":     "⚠️ Avval /setup orqali sozlang",
-        "setup_step1": (
-            "⚙️ *Avtoyuborish sozlamasi*\n\n"
-            "📝 *Qadam 1 / 3*\n\n"
-            "E'lon matnini yuboring:"
-        ),
-        "setup_step2": (
+        "step1":           "📝 *Qadam 1 / 3*\n\nE'lon matnini yuboring:",
+        "step2": (
             "📍 *Qadam 2 / 3*\n\n"
-            "Guruh yoki kanal *username yoki ID* sini kiriting.\n\n"
-            "Variantlar:\n"
-            "• Kanal usernamei: `@mygroup`\n"
-            "• Raqamli ID: `-1001234567890`\n\n"
-            "_Siz o'sha guruh/kanalda a'zo bo'lishingiz kerak_"
+            "Guruh yoki kanal username yoki ID sini kiriting.\n\n"
+            "• Username: `@mygroup`\n"
+            "• ID: `-1001234567890`\n\n"
+            "_Siz o'sha guruhda a'zo bo'lishingiz kerak_"
         ),
-        "setup_step3":     "⏱ *Qadam 3 / 3*\n\nDaqiqada necha marta yuborish?",
+        "step3":           "⏱ *Qadam 3 / 3*\n\nDaqiqada necha marta yuborish?",
         "freq_1":          "1 marta/daq",
         "freq_2":          "2 marta/daq",
         "freq_3":          "3 marta/daq",
         "freq_4":          "4 marta/daq",
         "freq_custom_btn": "✏️ Boshqa raqam",
-        "freq_custom_ask": "✏️ Daqiqada necha marta yuborishni kiriting (1 – 60):",
+        "freq_custom_ask": "✏️ Daqiqada necha marta yuborishni kiriting (1–60):",
         "freq_invalid":    "❌ 1 dan 60 gacha butun son kiriting.",
         "preview": (
             "👁 *Ko'rinish:*\n\n"
@@ -132,26 +120,29 @@ TEXTS = {
         "cancelled":       "❌ Sozlash bekor qilindi.",
         "chat_invalid":    "❌ Noto'g'ri format.\n@username yoki raqamli ID kiriting.",
         "lang_select":     "🌐 Выберите язык / Tilni tanlang:",
+        "setup_done":      "✅ *Yuborish boshlandi!*",
     },
 }
 
+# mode values stored in user_data:
+# "idle" | "await_msg" | "await_chat" | "await_freq_custom"
 
 def t(lang: str, key: str, **kwargs) -> str:
     text = TEXTS.get(lang, TEXTS["ru"]).get(key, key)
     return text.format(**kwargs) if kwargs else text
 
-
 def get_lang(ctx: ContextTypes.DEFAULT_TYPE) -> str:
     return ctx.user_data.get("lang", "ru")
-
 
 def is_admin(uid: int) -> bool:
     return uid == ADMIN_ID
 
-
 def _is_running(ctx: ContextTypes.DEFAULT_TYPE) -> bool:
     return bool(ctx.job_queue.get_jobs_by_name("cargo"))
 
+def _stop_jobs(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    for job in ctx.job_queue.get_jobs_by_name("cargo"):
+        job.schedule_removal()
 
 def _panel_keyboard(lang: str, active: bool) -> InlineKeyboardMarkup:
     toggle = (
@@ -166,6 +157,18 @@ def _panel_keyboard(lang: str, active: bool) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(t(lang, "btn_lang"),   callback_data="panel_lang")],
     ])
 
+def _freq_keyboard(lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(t(lang, "freq_1"), callback_data="freq_1"),
+            InlineKeyboardButton(t(lang, "freq_2"), callback_data="freq_2"),
+        ],
+        [
+            InlineKeyboardButton(t(lang, "freq_3"), callback_data="freq_3"),
+            InlineKeyboardButton(t(lang, "freq_4"), callback_data="freq_4"),
+        ],
+        [InlineKeyboardButton(t(lang, "freq_custom_btn"), callback_data="freq_custom")],
+    ])
 
 def _settings_summary(lang: str, bd: dict) -> str:
     chat     = bd.get("target_chat", "—")
@@ -179,7 +182,7 @@ def _settings_summary(lang: str, bd: dict) -> str:
     )
 
 
-# ── Job: post as user ─────────────────────────────────────────────────────────
+# ── Job ───────────────────────────────────────────────────────────────────────
 
 async def _post_cargo(ctx: ContextTypes.DEFAULT_TYPE) -> None:
     bd      = ctx.bot_data
@@ -201,6 +204,7 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         await update.message.reply_text(t("ru", "not_admin"))
         return
+    ctx.user_data["mode"] = "idle"
     await update.message.reply_text(
         t("ru", "lang_select"),
         reply_markup=InlineKeyboardMarkup([[
@@ -210,34 +214,14 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def lang_picked(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    ctx.user_data["lang"] = "uz" if query.data == "setlang_uz" else "ru"
-    lang = ctx.user_data["lang"]
-    ctx.user_data["setup"] = {}
-    await query.edit_message_text(t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN)
-    return SETUP_MSG
-
-
-async def _send_panel(message, ctx) -> None:
-    lang   = get_lang(ctx)
-    bd     = ctx.bot_data
-    active = _is_running(ctx)
-    status = t(lang, "running") if active else t(lang, "stopped")
-    if not bd.get("cargo_text"):
-        await message.reply_text(t(lang, "not_configured"), parse_mode=ParseMode.MARKDOWN)
+async def cmd_setup(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
         return
-    await message.reply_text(
-        f"{t(lang, 'panel_header')}\n\n"
-        f"{t(lang, 'status_label')}: {status}\n\n"
-        + _settings_summary(lang, bd),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_panel_keyboard(lang, active),
-    )
+    lang = get_lang(ctx)
+    ctx.user_data["mode"]  = "await_msg"
+    ctx.user_data["setup"] = {}
+    await update.message.reply_text(t(lang, "step1"), parse_mode=ParseMode.MARKDOWN)
 
-
-# ── /chatid ───────────────────────────────────────────────────────────────────
 
 async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
@@ -246,211 +230,167 @@ async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-# ── Panel buttons ─────────────────────────────────────────────────────────────
+# ── Message handler ───────────────────────────────────────────────────────────
 
-async def panel_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_admin(update.effective_user.id):
+        return
+    lang = get_lang(ctx)
+    mode = ctx.user_data.get("mode", "idle")
+    text = update.message.text or ""
+
+    if mode == "await_msg":
+        ctx.user_data["setup"]["text"] = text
+        ctx.user_data["mode"] = "await_chat"
+        await update.message.reply_text(t(lang, "step2"), parse_mode=ParseMode.MARKDOWN)
+
+    elif mode == "await_chat":
+        raw = text.strip()
+        if update.message.forward_from_chat:
+            raw = str(update.message.forward_from_chat.id)
+        if not raw.startswith("@") and not raw.lstrip("-").isdigit():
+            await update.message.reply_text(t(lang, "chat_invalid"), parse_mode=ParseMode.MARKDOWN)
+            return
+        ctx.user_data["setup"]["chat_id"] = raw
+        ctx.user_data["mode"] = "await_freq"
+        await update.message.reply_text(
+            t(lang, "step3"),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=_freq_keyboard(lang),
+        )
+
+    elif mode == "await_freq_custom":
+        try:
+            freq = int(text.strip())
+            if not (1 <= freq <= 60):
+                raise ValueError
+        except ValueError:
+            await update.message.reply_text(t(lang, "freq_invalid"))
+            return
+        ctx.user_data["setup"]["freq"] = freq
+        ctx.user_data["mode"] = "await_confirm"
+        await _show_preview(update.message.chat_id, ctx, lang)
+
+
+# ── Callback handler ──────────────────────────────────────────────────────────
+
+async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
     if not is_admin(query.from_user.id):
         return
+
     lang = get_lang(ctx)
-    bd   = ctx.bot_data
+    data = query.data
 
-    if query.data == "panel_lang":
-        ctx.user_data["lang"] = "uz" if lang == "ru" else "ru"
+    # ── Language selection ──
+    if data.startswith("setlang_"):
+        ctx.user_data["lang"]  = "uz" if data == "setlang_uz" else "ru"
         lang = ctx.user_data["lang"]
-        active = _is_running(ctx)
-        status = t(lang, "running") if active else t(lang, "stopped")
-        await query.edit_message_text(
-            f"{t(lang, 'panel_header')}\n\n"
-            f"{t(lang, 'status_label')}: {status}\n\n"
-            + _settings_summary(lang, bd),
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=_panel_keyboard(lang, active),
-        )
+        ctx.user_data["mode"]  = "await_msg"
+        ctx.user_data["setup"] = {}
+        await query.edit_message_text(t(lang, "step1"), parse_mode=ParseMode.MARKDOWN)
 
-    elif query.data == "panel_start":
-        if not bd.get("cargo_text") or not bd.get("target_chat"):
-            await query.answer(t(lang, "no_settings"), show_alert=True)
-            return
-        if not _is_running(ctx):
-            ctx.job_queue.run_repeating(
-                _post_cargo, interval=60 / bd.get("freq", 1), first=0, name="cargo"
-            )
+    # ── Frequency buttons ──
+    elif data.startswith("freq_") and ctx.user_data.get("mode") == "await_freq":
+        if data == "freq_custom":
+            ctx.user_data["mode"] = "await_freq_custom"
+            await query.edit_message_text(t(lang, "freq_custom_ask"))
+        else:
+            freq = int(data.split("_")[1])
+            ctx.user_data["setup"]["freq"] = freq
+            ctx.user_data["mode"] = "await_confirm"
+            await query.edit_message_text(t(lang, "step3"))
+            await _show_preview(query.message.chat_id, ctx, lang)
+
+    # ── Confirm / Cancel setup ──
+    elif data == "setup_confirm":
+        s  = ctx.user_data.get("setup", {})
+        bd = ctx.bot_data
+        bd["cargo_text"]     = s.get("text", "")
+        bd["target_chat"]    = s.get("chat_id", "")
+        bd["freq"]           = s.get("freq", 1)
         bd["posting_active"] = True
+        ctx.user_data["mode"] = "idle"
+        _stop_jobs(ctx)
+        ctx.job_queue.run_repeating(_post_cargo, interval=60 / bd["freq"], first=0, name="cargo")
         await query.edit_message_text(
-            f"{t(lang, 'panel_header')}\n\n{t(lang, 'started')}\n\n"
-            + _settings_summary(lang, bd),
+            f"{t(lang, 'panel_header')}\n\n{t(lang, 'started')}\n\n" + _settings_summary(lang, bd),
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=_panel_keyboard(lang, True),
         )
 
-    elif query.data == "panel_stop":
-        for job in ctx.job_queue.get_jobs_by_name("cargo"):
-            job.schedule_removal()
-        bd["posting_active"] = False
+    elif data == "setup_cancel":
+        ctx.user_data["mode"]  = "idle"
+        ctx.user_data["setup"] = {}
+        await query.edit_message_text(t(lang, "cancelled"))
+
+    # ── Panel buttons ──
+    elif data == "panel_lang":
+        ctx.user_data["lang"] = "uz" if lang == "ru" else "ru"
+        lang = ctx.user_data["lang"]
+        active = _is_running(ctx)
+        await query.edit_message_text(
+            f"{t(lang, 'panel_header')}\n\n{t(lang, 'status_label')}: "
+            f"{t(lang, 'running' if active else 'stopped')}\n\n"
+            + _settings_summary(lang, ctx.bot_data),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=_panel_keyboard(lang, active),
+        )
+
+    elif data == "panel_setup":
+        ctx.user_data["mode"]  = "await_msg"
+        ctx.user_data["setup"] = {}
+        await query.edit_message_text(t(lang, "step1"), parse_mode=ParseMode.MARKDOWN)
+
+    elif data == "panel_start":
+        bd = ctx.bot_data
+        if not bd.get("cargo_text") or not bd.get("target_chat"):
+            await query.answer(t(lang, "no_settings"), show_alert=True)
+            return
+        if not _is_running(ctx):
+            ctx.job_queue.run_repeating(_post_cargo, interval=60 / bd.get("freq", 1), first=0, name="cargo")
+        bd["posting_active"] = True
+        await query.edit_message_text(
+            f"{t(lang, 'panel_header')}\n\n{t(lang, 'started')}\n\n" + _settings_summary(lang, bd),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=_panel_keyboard(lang, True),
+        )
+
+    elif data == "panel_stop":
+        _stop_jobs(ctx)
+        ctx.bot_data["posting_active"] = False
         await query.edit_message_text(
             f"{t(lang, 'panel_header')}\n\n{t(lang, 'stopped_msg')}\n\n"
-            + _settings_summary(lang, bd),
+            + _settings_summary(lang, ctx.bot_data),
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=_panel_keyboard(lang, False),
         )
 
-    elif query.data == "panel_status":
+    elif data == "panel_status":
         active = _is_running(ctx)
-        status = t(lang, "running") if active else t(lang, "stopped")
         await query.edit_message_text(
-            f"{t(lang, 'panel_header')}\n\n"
-            f"{t(lang, 'status_label')}: {status}\n\n"
-            + _settings_summary(lang, bd),
+            f"{t(lang, 'panel_header')}\n\n{t(lang, 'status_label')}: "
+            f"{t(lang, 'running' if active else 'stopped')}\n\n"
+            + _settings_summary(lang, ctx.bot_data),
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=_panel_keyboard(lang, active),
         )
 
 
-# ── Setup conversation ────────────────────────────────────────────────────────
-
-async def setup_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    if not is_admin(update.effective_user.id):
-        return ConversationHandler.END
-    lang = get_lang(ctx)
-    ctx.user_data["setup"] = {}
-    if update.callback_query:
-        await update.callback_query.answer()
-        await update.callback_query.edit_message_text(
-            t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN
-        )
-    else:
-        await update.message.reply_text(t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN)
-    return SETUP_MSG
-
-
-async def setup_got_msg(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["setup"]["text"] = update.message.text
-    await update.message.reply_text(t(lang, "setup_step2"), parse_mode=ParseMode.MARKDOWN)
-    return SETUP_CHAT
-
-
-async def setup_got_chat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    if update.message.forward_from_chat:
-        chat_id = str(update.message.forward_from_chat.id)
-    else:
-        raw = update.message.text.strip()
-        if not raw.startswith("@") and not raw.lstrip("-").isdigit():
-            await update.message.reply_text(
-                t(lang, "chat_invalid"), parse_mode=ParseMode.MARKDOWN
-            )
-            return SETUP_CHAT
-        chat_id = raw
-
-    ctx.user_data["setup"]["chat_id"] = chat_id
-    await update.message.reply_text(
-        t(lang, "setup_step3"),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(t(lang, "freq_1"), callback_data="freq_1"),
-                InlineKeyboardButton(t(lang, "freq_2"), callback_data="freq_2"),
-            ],
-            [
-                InlineKeyboardButton(t(lang, "freq_3"), callback_data="freq_3"),
-                InlineKeyboardButton(t(lang, "freq_4"), callback_data="freq_4"),
-            ],
-            [InlineKeyboardButton(t(lang, "freq_custom_btn"), callback_data="freq_custom")],
-        ]),
-    )
-    return SETUP_FREQ
-
-
-async def setup_freq_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    if query.data == "freq_custom":
-        await query.edit_message_text(t(lang, "freq_custom_ask"))
-        return SETUP_FREQ_CUSTOM
-    ctx.user_data["setup"]["freq"] = int(query.data.split("_")[1])
-    await query.edit_message_text(t(lang, "setup_step3"))
-    s        = ctx.user_data["setup"]
-    freq     = s["freq"]
+async def _show_preview(chat_id: int, ctx: ContextTypes.DEFAULT_TYPE, lang: str) -> None:
+    s        = ctx.user_data.get("setup", {})
+    freq     = s.get("freq", 1)
     interval = round(60 / freq, 1)
     await ctx.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=t(lang, "preview", chat=s["chat_id"], freq=freq, interval=interval, text=s["text"]),
+        chat_id=chat_id,
+        text=t(lang, "preview", chat=s.get("chat_id", ""), freq=freq, interval=interval, text=s.get("text", "")),
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="setup_confirm"),
             InlineKeyboardButton(t(lang, "btn_cancel"),  callback_data="setup_cancel"),
         ]]),
     )
-    return SETUP_CONFIRM
-
-
-async def setup_freq_custom(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    try:
-        freq = int(update.message.text.strip())
-        if not (1 <= freq <= 60):
-            raise ValueError
-    except ValueError:
-        await update.message.reply_text(t(lang, "freq_invalid"))
-        return SETUP_FREQ_CUSTOM
-    ctx.user_data["setup"]["freq"] = freq
-    return await _show_preview(update.message, ctx)
-
-
-async def _show_preview(message, ctx) -> int:
-    lang     = get_lang(ctx)
-    s        = ctx.user_data["setup"]
-    freq     = s["freq"]
-    interval = round(60 / freq, 1)
-    await message.reply_text(
-        t(lang, "preview", chat=s["chat_id"], freq=freq, interval=interval, text=s["text"]),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="setup_confirm"),
-            InlineKeyboardButton(t(lang, "btn_cancel"),  callback_data="setup_cancel"),
-        ]]),
-    )
-    return SETUP_CONFIRM
-
-
-async def setup_confirm(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    lang = get_lang(ctx)
-    s    = ctx.user_data.get("setup", {})
-    bd   = ctx.bot_data
-    bd["cargo_text"]     = s["text"]
-    bd["target_chat"]    = s["chat_id"]
-    bd["freq"]           = s["freq"]
-    bd["posting_active"] = True
-
-    for job in ctx.job_queue.get_jobs_by_name("cargo"):
-        job.schedule_removal()
-    ctx.job_queue.run_repeating(_post_cargo, interval=60 / s["freq"], first=0, name="cargo")
-    ctx.user_data["setup"] = {}
-
-    await query.edit_message_text(
-        f"{t(lang, 'panel_header')}\n\n{t(lang, 'started')}\n\n"
-        + _settings_summary(lang, bd),
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_panel_keyboard(lang, True),
-    )
-    return ConversationHandler.END
-
-
-async def setup_cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    lang = get_lang(ctx)
-    ctx.user_data["setup"] = {}
-    if update.callback_query:
-        await update.callback_query.answer()
-        await update.callback_query.edit_message_text(t(lang, "cancelled"))
-    else:
-        await update.message.reply_text(t(lang, "cancelled"))
-    return ConversationHandler.END
 
 
 # ── Health & run ──────────────────────────────────────────────────────────────
@@ -491,36 +431,16 @@ def main() -> None:
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN not set")
     if not TG_API_ID or not TG_API_HASH or not TG_SESSION:
-        raise RuntimeError("TG_API_ID, TG_API_HASH and TG_SESSION must all be set in environment")
+        raise RuntimeError("TG_API_ID, TG_API_HASH and TG_SESSION must all be set")
 
     persistence = PicklePersistence(filepath="bot_data.pkl")
     app = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
 
-    setup_conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("setup", setup_start),
-            CallbackQueryHandler(setup_start,  pattern="^panel_setup$"),
-            CallbackQueryHandler(lang_picked,   pattern="^setlang_"),
-        ],
-        states={
-            SETUP_MSG:         [MessageHandler(filters.TEXT & ~filters.COMMAND, setup_got_msg)],
-            SETUP_CHAT:        [MessageHandler(filters.ALL & ~filters.COMMAND, setup_got_chat)],
-            SETUP_FREQ:        [CallbackQueryHandler(setup_freq_btn, pattern="^freq_")],
-            SETUP_FREQ_CUSTOM: [MessageHandler(filters.TEXT & ~filters.COMMAND, setup_freq_custom)],
-            SETUP_CONFIRM:     [
-                CallbackQueryHandler(setup_confirm, pattern="^setup_confirm$"),
-                CallbackQueryHandler(setup_cancel,  pattern="^setup_cancel$"),
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", setup_cancel)],
-        per_message=False,
-        allow_reentry=True,
-    )
-
     app.add_handler(CommandHandler("start",  cmd_start))
+    app.add_handler(CommandHandler("setup",  cmd_setup))
     app.add_handler(CommandHandler("chatid", cmd_chatid))
-    app.add_handler(setup_conv)
-    app.add_handler(CallbackQueryHandler(panel_btn, pattern="^panel_"))
+    app.add_handler(CallbackQueryHandler(on_callback))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
 
     logger.info("Cargo userbot started")
     asyncio.run(_run(app))
