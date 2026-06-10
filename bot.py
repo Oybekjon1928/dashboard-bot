@@ -390,8 +390,8 @@ async def _show_preview(chat_id: int, ctx: ContextTypes.DEFAULT_TYPE, lang: str)
     preview_text = t(
         lang, "preview",
         chat=escape_md(s.get("chat_id", "")),
-        freq=freq,
-        interval=interval,
+        freq=escape_md(str(freq)),
+        interval=escape_md(str(interval)),
         text=escape_md(s.get("text", "")),
     )
     await ctx.bot.send_message(
