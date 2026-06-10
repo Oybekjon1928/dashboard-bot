@@ -64,7 +64,7 @@ TEXTS = {
         "preview": (
             "👁 *Предпросмотр:*\n\n"
             "📍 Группа/канал: `{chat}`\n"
-            "⏱ {freq} раз/мин (каждые {interval} сек)\n\n"
+            "⏱ {freq} раз/мин \\(каждые {interval} сек\\)\n\n"
             "📝 *Сообщение:*\n{text}"
         ),
         "btn_confirm":     "✅ Запустить",
@@ -112,7 +112,7 @@ TEXTS = {
         "preview": (
             "👁 *Ko'rinish:*\n\n"
             "📍 Kanal/guruh: `{chat}`\n"
-            "⏱ {freq} marta/daq (har {interval} son)\n\n"
+            "⏱ {freq} marta/daq \\(har {interval} son\\)\n\n"
             "📝 *Xabar:*\n{text}"
         ),
         "btn_confirm":     "✅ Boshlash",
@@ -126,6 +126,11 @@ TEXTS = {
 
 # mode values stored in user_data:
 # "idle" | "await_msg" | "await_chat" | "await_freq_custom"
+
+def escape_md(text: str) -> str:
+    for ch in r"\_*`[]()~>#+-=|{}.!":
+        text = text.replace(ch, "\\" + ch)
+    return text
 
 def t(lang: str, key: str, **kwargs) -> str:
     text = TEXTS.get(lang, TEXTS["ru"]).get(key, key)
@@ -382,10 +387,17 @@ async def _show_preview(chat_id: int, ctx: ContextTypes.DEFAULT_TYPE, lang: str)
     s        = ctx.user_data.get("setup", {})
     freq     = s.get("freq", 1)
     interval = round(60 / freq, 1)
+    preview_text = t(
+        lang, "preview",
+        chat=escape_md(s.get("chat_id", "")),
+        freq=freq,
+        interval=interval,
+        text=escape_md(s.get("text", "")),
+    )
     await ctx.bot.send_message(
         chat_id=chat_id,
-        text=t(lang, "preview", chat=s.get("chat_id", ""), freq=freq, interval=interval, text=s.get("text", "")),
-        parse_mode=ParseMode.MARKDOWN,
+        text=preview_text,
+        parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(t(lang, "btn_confirm"), callback_data="setup_confirm"),
             InlineKeyboardButton(t(lang, "btn_cancel"),  callback_data="setup_cancel"),
