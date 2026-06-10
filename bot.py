@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 LANG_PICK = 0
 SETUP_MSG, SETUP_CHAT, SETUP_FREQ, SETUP_FREQ_CUSTOM, SETUP_CONFIRM = range(1, 6)
 
-tg_client: TelegramClient = None  # type: ignore  — initialized in main()
+tg_client: TelegramClient = None  # type: ignore  — initialized in _run()
 
 # ── Texts ─────────────────────────────────────────────────────────────────────
 
@@ -452,6 +452,9 @@ async def _health(request):
 
 
 async def _run(app: Application) -> None:
+    global tg_client
+    tg_client = TelegramClient(StringSession(TG_SESSION), TG_API_ID, TG_API_HASH)
+
     port = int(os.getenv("PORT", 8080))
     web_app = web.Application()
     web_app.router.add_get("/", _health)
@@ -477,12 +480,10 @@ async def _run(app: Application) -> None:
 
 
 def main() -> None:
-    global tg_client
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN not set")
     if not TG_API_ID or not TG_API_HASH or not TG_SESSION:
         raise RuntimeError("TG_API_ID, TG_API_HASH and TG_SESSION must all be set in environment")
-    tg_client = TelegramClient(StringSession(TG_SESSION), TG_API_ID, TG_API_HASH)
 
     persistence = PicklePersistence(filepath="bot_data.pkl")
     app = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
