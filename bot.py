@@ -14,14 +14,18 @@ from telegram.ext import (
     filters,
 )
 from telegram.constants import ParseMode
+from telethon import TelegramClient
+from telethon.sessions import StringSession
 
-from config import BOT_TOKEN, ADMIN_ID
+from config import BOT_TOKEN, ADMIN_ID, TG_API_ID, TG_API_HASH, TG_SESSION
 
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 LANG_PICK = 0
 SETUP_MSG, SETUP_CHAT, SETUP_FREQ, SETUP_FREQ_CUSTOM, SETUP_CONFIRM = range(1, 6)
+
+tg_client = TelegramClient(StringSession(TG_SESSION), TG_API_ID, TG_API_HASH)
 
 # ── Texts ─────────────────────────────────────────────────────────────────────
 
@@ -52,12 +56,11 @@ TEXTS = {
         ),
         "setup_step2": (
             "📍 *Шаг 2 / 3*\n\n"
-            "Укажите *Chat ID* группы или канала.\n\n"
-            "Как узнать ID:\n"
-            "1. Добавьте бота в группу/канал\n"
-            "2. Напишите там `/chatid`\n"
-            "3. Скопируйте число и отправьте сюда\n\n"
-            "_Для канала ID начинается с `-100`_"
+            "Укажите *название или ID* группы/канала.\n\n"
+            "Варианты:\n"
+            "• Username канала: `@mygroup`\n"
+            "• Числовой ID: `-1001234567890`\n\n"
+            "_Вы должны быть участником этой группы/канала_"
         ),
         "setup_step3":     "⏱ *Шаг 3 / 3*\n\nСколько раз в минуту отправлять?",
         "freq_1":          "1 раз/мин",
@@ -69,14 +72,14 @@ TEXTS = {
         "freq_invalid":    "❌ Введите целое число от 1 до 60.",
         "preview": (
             "👁 *Предпросмотр:*\n\n"
-            "📍 Канал/группа: `{chat}`\n"
+            "📍 Группа/канал: `{chat}`\n"
             "⏱ {freq} раз/мин (каждые {interval} сек)\n\n"
             "📝 *Сообщение:*\n{text}"
         ),
         "btn_confirm":     "✅ Запустить",
         "btn_cancel":      "❌ Отмена",
         "cancelled":       "❌ Настройка отменена.",
-        "chat_invalid":    "❌ Неверный формат. Отправьте числовой Chat ID.\nПример: `-1001234567890`",
+        "chat_invalid":    "❌ Неверный формат.\nВведите @username или числовой ID.",
         "lang_select":     "🌐 Выберите язык / Tilni tanlang:",
     },
     "uz": {
@@ -105,12 +108,11 @@ TEXTS = {
         ),
         "setup_step2": (
             "📍 *Qadam 2 / 3*\n\n"
-            "Guruh yoki kanal *Chat ID* sini kiriting.\n\n"
-            "ID ni qanday bilish:\n"
-            "1. Botni guruh/kanalga qo'shing\n"
-            "2. U yerda `/chatid` yozing\n"
-            "3. Raqamni nusxa oling va shu yerga yuboring\n\n"
-            "_Kanal uchun ID `-100` bilan boshlanadi_"
+            "Guruh yoki kanal *username yoki ID* sini kiriting.\n\n"
+            "Variantlar:\n"
+            "• Kanal usernamei: `@mygroup`\n"
+            "• Raqamli ID: `-1001234567890`\n\n"
+            "_Siz o'sha guruh/kanalda a'zo bo'lishingiz kerak_"
         ),
         "setup_step3":     "⏱ *Qadam 3 / 3*\n\nDaqiqada necha marta yuborish?",
         "freq_1":          "1 marta/daq",
@@ -129,7 +131,7 @@ TEXTS = {
         "btn_confirm":     "✅ Boshlash",
         "btn_cancel":      "❌ Bekor",
         "cancelled":       "❌ Sozlash bekor qilindi.",
-        "chat_invalid":    "❌ Noto'g'ri format. Raqamli Chat ID yuboring.\nMisol: `-1001234567890`",
+        "chat_invalid":    "❌ Noto'g'ri format.\n@username yoki raqamli ID kiriting.",
         "lang_select":     "🌐 Выберите язык / Tilni tanlang:",
     },
 }
@@ -167,15 +169,31 @@ def _panel_keyboard(lang: str, active: bool) -> InlineKeyboardMarkup:
 
 
 def _settings_summary(lang: str, bd: dict) -> str:
-    text     = bd.get("cargo_text", "—")
     chat     = bd.get("target_chat", "—")
     freq     = bd.get("freq", 1)
     interval = round(60 / freq, 1)
+    text     = bd.get("cargo_text", "—")
     return (
         f"{t(lang, 'chat_label')}: `{chat}`\n"
         f"{t(lang, 'freq_label')}: {t(lang, 'freq_value', freq=freq, interval=interval)}\n\n"
         f"{t(lang, 'msg_label')}\n{text}"
     )
+
+
+# ── Job: post as user ─────────────────────────────────────────────────────────
+
+async def _post_cargo(ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    bd      = ctx.bot_data
+    text    = bd.get("cargo_text", "")
+    chat_id = bd.get("target_chat", "")
+    if not text or not chat_id:
+        return
+    try:
+        target = int(chat_id) if chat_id.lstrip("-").isdigit() else chat_id
+        await tg_client.send_message(target, text)
+        logger.info("Posted as user to %s", chat_id)
+    except Exception as e:
+        logger.error("Post failed: %s", e)
 
 
 # ── /start ────────────────────────────────────────────────────────────────────
@@ -184,7 +202,6 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     if not is_admin(update.effective_user.id):
         await update.message.reply_text(t("ru", "not_admin"))
         return ConversationHandler.END
-
     if "lang" not in ctx.user_data:
         await update.message.reply_text(
             t("ru", "lang_select"),
@@ -194,7 +211,6 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             ]]),
         )
         return LANG_PICK
-
     await _send_panel(update.message, ctx)
     return ConversationHandler.END
 
@@ -213,11 +229,9 @@ async def _send_panel(message, ctx) -> None:
     bd     = ctx.bot_data
     active = _is_running(ctx)
     status = t(lang, "running") if active else t(lang, "stopped")
-
     if not bd.get("cargo_text"):
         await message.reply_text(t(lang, "not_configured"), parse_mode=ParseMode.MARKDOWN)
         return
-
     await message.reply_text(
         f"{t(lang, 'panel_header')}\n\n"
         f"{t(lang, 'status_label')}: {status}\n\n"
@@ -236,21 +250,6 @@ async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-# ── Job ───────────────────────────────────────────────────────────────────────
-
-async def _post_cargo(ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    bd      = ctx.bot_data
-    text    = bd.get("cargo_text", "")
-    chat_id = bd.get("target_chat", "")
-    if not text or not chat_id:
-        return
-    try:
-        await ctx.bot.send_message(chat_id=chat_id, text=text)
-        logger.info("Posted to %s", chat_id)
-    except Exception as e:
-        logger.error("Post failed: %s", e)
-
-
 # ── Panel buttons ─────────────────────────────────────────────────────────────
 
 async def panel_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -262,9 +261,8 @@ async def panel_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     bd   = ctx.bot_data
 
     if query.data == "panel_lang":
-        new_lang = "uz" if lang == "ru" else "ru"
-        ctx.user_data["lang"] = new_lang
-        lang = new_lang
+        ctx.user_data["lang"] = "uz" if lang == "ru" else "ru"
+        lang = ctx.user_data["lang"]
         active = _is_running(ctx)
         status = t(lang, "running") if active else t(lang, "stopped")
         await query.edit_message_text(
@@ -274,9 +272,8 @@ async def panel_btn(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=_panel_keyboard(lang, active),
         )
-        return
 
-    if query.data == "panel_start":
+    elif query.data == "panel_start":
         if not bd.get("cargo_text") or not bd.get("target_chat"):
             await query.answer(t(lang, "no_settings"), show_alert=True)
             return
@@ -328,9 +325,7 @@ async def setup_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN
         )
     else:
-        await update.message.reply_text(
-            t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN
-        )
+        await update.message.reply_text(t(lang, "setup_step1"), parse_mode=ParseMode.MARKDOWN)
     return SETUP_MSG
 
 
@@ -347,7 +342,7 @@ async def setup_got_chat(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         chat_id = str(update.message.forward_from_chat.id)
     else:
         raw = update.message.text.strip()
-        if not raw.lstrip("-").isdigit():
+        if not raw.startswith("@") and not raw.lstrip("-").isdigit():
             await update.message.reply_text(
                 t(lang, "chat_invalid"), parse_mode=ParseMode.MARKDOWN
             )
@@ -465,6 +460,9 @@ async def _run(app: Application) -> None:
     await web.TCPSite(runner, "0.0.0.0", port).start()
     logger.info("Health server on port %s", port)
 
+    await tg_client.start()
+    logger.info("Telethon userbot connected")
+
     async with app:
         await app.start()
         bd = app.bot_data
@@ -475,10 +473,14 @@ async def _run(app: Application) -> None:
         await app.updater.start_polling(drop_pending_updates=True)
         await asyncio.Event().wait()
 
+    await tg_client.disconnect()
+
 
 def main() -> None:
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN not set")
+    if not TG_SESSION:
+        raise RuntimeError("TG_SESSION not set — run get_session.py first")
 
     persistence = PicklePersistence(filepath="bot_data.pkl")
     app = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
@@ -516,7 +518,7 @@ def main() -> None:
     app.add_handler(setup_conv)
     app.add_handler(CallbackQueryHandler(panel_btn, pattern="^panel_"))
 
-    logger.info("Cargo bot started")
+    logger.info("Cargo userbot started")
     asyncio.run(_run(app))
 
 
