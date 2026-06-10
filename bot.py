@@ -22,8 +22,7 @@ from config import BOT_TOKEN, ADMIN_ID, TG_API_ID, TG_API_HASH, TG_SESSION
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-LANG_PICK = 0
-SETUP_MSG, SETUP_CHAT, SETUP_FREQ, SETUP_FREQ_CUSTOM, SETUP_CONFIRM = range(1, 6)
+SETUP_MSG, SETUP_CHAT, SETUP_FREQ, SETUP_FREQ_CUSTOM, SETUP_CONFIRM = range(5)
 
 tg_client: TelegramClient = None  # type: ignore  — initialized in _run()
 
@@ -198,30 +197,25 @@ async def _post_cargo(ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 # ── /start ────────────────────────────────────────────────────────────────────
 
-async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_admin(update.effective_user.id):
         await update.message.reply_text(t("ru", "not_admin"))
-        return ConversationHandler.END
-    if "lang" not in ctx.user_data:
-        await update.message.reply_text(
-            t("ru", "lang_select"),
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🇷🇺 Русский", callback_data="setlang_ru"),
-                InlineKeyboardButton("🇺🇿 O'zbek",  callback_data="setlang_uz"),
-            ]]),
-        )
-        return LANG_PICK
-    await _send_panel(update.message, ctx)
-    return ConversationHandler.END
+        return
+    await update.message.reply_text(
+        t("ru", "lang_select"),
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("🇷🇺 Русский", callback_data="setlang_ru"),
+            InlineKeyboardButton("🇺🇿 O'zbek",  callback_data="setlang_uz"),
+        ]]),
+    )
 
 
-async def lang_picked(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+async def lang_picked(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
     ctx.user_data["lang"] = "uz" if query.data == "setlang_uz" else "ru"
     await query.edit_message_text("✅")
     await _send_panel(query.message, ctx)
-    return ConversationHandler.END
 
 
 async def _send_panel(message, ctx) -> None:
@@ -488,15 +482,6 @@ def main() -> None:
     persistence = PicklePersistence(filepath="bot_data.pkl")
     app = Application.builder().token(BOT_TOKEN).persistence(persistence).build()
 
-    start_conv = ConversationHandler(
-        entry_points=[CommandHandler("start", cmd_start)],
-        states={
-            LANG_PICK: [CallbackQueryHandler(lang_picked, pattern="^setlang_")],
-        },
-        fallbacks=[CommandHandler("start", cmd_start)],
-        per_message=False,
-    )
-
     setup_conv = ConversationHandler(
         entry_points=[
             CommandHandler("setup", setup_start),
@@ -516,8 +501,9 @@ def main() -> None:
         per_message=False,
     )
 
-    app.add_handler(start_conv)
+    app.add_handler(CommandHandler("start",  cmd_start))
     app.add_handler(CommandHandler("chatid", cmd_chatid))
+    app.add_handler(CallbackQueryHandler(lang_picked, pattern="^setlang_"))
     app.add_handler(setup_conv)
     app.add_handler(CallbackQueryHandler(panel_btn, pattern="^panel_"))
 
